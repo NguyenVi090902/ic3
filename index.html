@@ -40,26 +40,9 @@ function render(){
   });
   if(!progs.length&&groups.length) h+=`<div class="empty">Chưa có chương trình nào.</div>`;
 
-  const s=D.support;
-  if(s){
-    const vu=safeUrl(s.videoUrl);
-    h+=`<section class="prog"><div class="sec-head"><h2><span class="sico">${esc(s.icon)}</span>${esc(s.title)}</h2></div>
-    <div class="support">
-      <div class="guide"><h3>📝 ${esc(s.guideTitle)}</h3>
-        <ol>${(s.steps||[]).map(x=>`<li><span>${md(x)}</span></li>`).join('')}</ol>
-        ${s.password?`<div class="pw">🔑 ${esc(s.passwordLabel)} <code id="pw">${esc(s.password)}</code><button class="copy" id="cp">Sao chép</button></div>`:''}
-        ${vu?`<div class="vid">🎬 <a href="${esc(vu)}" target="_blank" rel="noopener">${esc(s.videoText)}</a></div>`:''}
-      </div></div></section>`;
-  }
   document.getElementById('app').innerHTML=h;
 
   document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{cur=+b.dataset.g;render()});
-  const cp=document.getElementById('cp');
-  if(cp)cp.onclick=async()=>{
-    const t=D.support.password;
-    try{await navigator.clipboard.writeText(t)}catch{const r=document.createRange();r.selectNode(document.getElementById('pw'));getSelection().removeAllRanges();getSelection().addRange(r);document.execCommand('copy')}
-    cp.textContent='Đã chép ✓';setTimeout(()=>cp.textContent='Sao chép',1500);
-  };
 }
 
 function renderReview(gi,pi,li){
