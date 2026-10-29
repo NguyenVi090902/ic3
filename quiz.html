@@ -61,7 +61,7 @@ async function findClass(){
   $('#start').onclick=()=>{stu=$('#st').value;if(!stu)return alert('Em hãy chọn tên của mình');Q=quiz.questions;i=0;right=0;A=[];fin=false;show()};
 }
 
-const top=f=>{const p=Math.min(Math.max(f*100,3),97);return `<div class="top"><span class="cnt">Câu ${i+1}/${Q.length}</span><span class="ic">🏠</span><div class="track"><i id="pf" style="width:${p}%"></i><em id="pb" style="left:${p}%">🚲</em></div><span class="ic">🏫</span></div>`};
+const topbar=f=>{const p=Math.min(Math.max(f*100,3),97);return `<div class="top"><span class="cnt">Câu ${i+1}/${Q.length}</span><span class="ic">🏠</span><div class="track"><i id="pf" style="width:${p}%"></i><em id="pb" style="left:${p}%">🚲</em></div><span class="ic">🏫</span></div>`};
 function show(){
   const q=Q[i];locked=false;sel=null;P=null;let b='';
   if(q.type==='fill')b=`<div class="q fillq">${q.text.split('___').map(esc).join('<input autocomplete="off">')}</div>`;
@@ -72,7 +72,7 @@ function show(){
       b+=`<div>${q.pairs.map((p,k)=>`<div class="mrow"><span class="tx">${esc(p[0])}</span><select data-k="${k}"><option value="">-- Lựa chọn đáp án --</option>${vs.map(v=>`<option>${esc(v)}</option>`).join('')}</select></div>`).join('')}</div>`}
     else b+='<p class="hint">Chạm vào chữ rồi chạm vào ô, hoặc kéo thả</p><div class="dq"></div>';
   }
-  app.innerHTML=`${top(i/Q.length)}<div class="card">${b}<div id="fb"></div><div class="ft"><button class="go" id="ok">Kiểm Tra ✓</button></div></div>`;
+  app.innerHTML=`${topbar(i/Q.length)}<div class="card">${b}<div id="fb"></div><div class="ft"><button class="go" id="ok">Kiểm Tra ✓</button></div></div>`;
   if(q.type==='drag'){P=q.pairs.map(()=>null);drawDrag()}
   if(q.type==='fill')$('.fillq input').focus();
   document.querySelectorAll('.opt').forEach(t=>t.onclick=()=>{
