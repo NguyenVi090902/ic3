@@ -1,0 +1,106 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Làm bài</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<style>
+body{font-family:system-ui,sans-serif;background:#fffaf0;margin:0;color:#222}
+main{max-width:720px;margin:0 auto;padding:16px}
+.c{background:#fff;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 8px #0001}
+h1{font-size:22px}
+input[type=text],select{font:inherit;padding:8px 10px;border:1.5px solid #d9d4c3;border-radius:10px;max-width:100%}
+button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:10px 20px;background:#2f6fed;color:#fff;cursor:pointer}
+label.o{display:block;padding:8px 10px;margin:6px 0;border:1.5px solid #e5dfca;border-radius:10px;cursor:pointer}
+.slot{display:inline-block;min-width:110px;min-height:34px;border:2px dashed #aaa;border-radius:10px;padding:4px 8px;vertical-align:middle}
+.chip{display:inline-block;background:#e8f0ff;border:1.5px solid #2f6fed;border-radius:10px;padding:5px 10px;margin:4px;cursor:grab;user-select:none}
+.chip.sel{background:#2f6fed;color:#fff}
+.row{margin:8px 0}.bank{margin-top:10px;padding:8px;background:#f6f3e8;border-radius:10px}
+.good{color:#1a7f37;font-weight:700}.bad{color:#b42318;font-weight:700}
+</style></head><body><main id="app"></main>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sb=supabase.createClient(SB.url,SB.key),qid=new URLSearchParams(location.search).get('q'),app=$('#app');
+let quiz,cls,stu,P={},sel=null,done=false;
+
+(async function(){
+  const {data}=await sb.from('quizzes').select('*').eq('id',qid||'').maybeSingle();
+  if(!data){app.innerHTML='<div class="c">Không tìm thấy bài ôn.</div>';return}
+  quiz=data;let code='';try{code=localStorage.getItem('cc')||''}catch{}
+  app.innerHTML=`<h1>${esc(quiz.title)}</h1><div class="c"><p>Nhập <b>mã lớp</b> cô giáo đã cho:</p>
+    <input type="text" id="code" value="${esc(code)}" placeholder="VD: AB12CD"> <button id="go">Tiếp tục</button><div id="s"></div></div>`;
+  $('#go').onclick=findClass;if(code)findClass();
+})();
+
+async function findClass(){
+  const v=$('#code').value.trim(),{data}=await sb.rpc('get_class',{p_code:v});
+  if(!data){$('#s').innerHTML='<p class="bad">Không tìm thấy lớp. Em kiểm tra lại mã nhé.</p>';return}
+  cls=data;try{localStorage.setItem('cc',v.toUpperCase())}catch{}
+  $('#s').innerHTML=`<p>Lớp <b>${esc(cls.name)}</b> – ${esc(cls.school)}</p><select id="st"><option value="">-- Chọn tên của em --</option>${cls.students.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select> <button id="start">Bắt đầu</button>`;
+  $('#start').onclick=()=>{stu=$('#st').value;if(!stu)return alert('Em hãy chọn tên của mình');start()};
+}
+
+function start(){
+  app.innerHTML=`<h1>${esc(quiz.title)}</h1><fieldset id="qs" style="border:0;padding:0;margin:0">${quiz.questions.map(qh).join('')}</fieldset><p><button id="sub">Nộp bài</button></p><div id="res"></div>`;
+  quiz.questions.forEach((q,i)=>{if(q.type==='drag'){P[i]=q.pairs.map(()=>null);drawDrag(i)}});
+  $('#sub').onclick=submit;
+}
+function qh(q,i){
+  let b='';
+  if(q.type==='single'||q.type==='multi')
+    b=`<p><b>${i+1}.</b> ${esc(q.text)}${q.type==='multi'?' <i>(chọn nhiều đáp án)</i>':''}</p>`+q.options.map((o,k)=>`<label class="o"><input type="${q.type==='single'?'radio':'checkbox'}" name="r${i}" value="${k}"> ${esc(o)}</label>`).join('');
+  else if(q.type==='fill') b=`<p><b>${i+1}.</b> `+q.text.split('___').map(esc).join('<input type="text" size="10" autocomplete="off">')+'</p>';
+  else b=`<p><b>${i+1}.</b> ${esc(q.text)} <i>(chạm vào chữ rồi chạm vào ô, hoặc kéo thả)</i></p><div class="dq"></div>`;
+  return `<div class="c" data-q="${i}">${b}</div>`;
+}
+
+/* ----- kéo thả ----- */
+const chip=(v,i)=>`<span class="chip${sel&&sel.i===i&&sel.v===v?' sel':''}" draggable="true" data-v="${esc(v)}" data-i="${i}">${esc(v)}</span>`;
+function drawDrag(i){
+  const q=quiz.questions[i],p=P[i],box=document.querySelector(`[data-q="${i}"] .dq`),
+    bank=q.pairs.map(x=>x[1]).filter(x=>!p.includes(x)).sort();
+  box.innerHTML=q.pairs.map((x,k)=>`<div class="row">${esc(x[0])} → <span class="slot" data-k="${k}">${p[k]?chip(p[k],i):''}</span></div>`).join('')+`<div class="bank">${bank.map(v=>chip(v,i)).join('')||'&nbsp;'}</div>`;
+}
+function put(i,k,v){if(done)return;const p=P[i],o=p.indexOf(v);if(o>-1)p[o]=null;p[k]=v;sel=null;drawDrag(i)}
+document.addEventListener('click',e=>{
+  if(done)return;
+  const c=e.target.closest('.chip'),s=e.target.closest('.slot');if(!c&&!s)return;
+  const i=+(c||s).closest('[data-q]').dataset.q;
+  if(s&&sel&&sel.i===i)return put(i,+s.dataset.k,sel.v);          // đã chọn chữ → đặt vào ô
+  if(c&&s){P[i][+s.dataset.k]=null;sel=null}                      // bấm chữ trong ô → trả về
+  else if(c)sel=(sel&&sel.i===i&&sel.v===c.dataset.v)?null:{i,v:c.dataset.v};
+  drawDrag(i);
+});
+document.addEventListener('dragstart',e=>{const c=e.target.closest&&e.target.closest('.chip');if(c)e.dataTransfer.setData('text/plain',c.dataset.i+'|'+c.dataset.v)});
+document.addEventListener('dragover',e=>{if(e.target.closest&&e.target.closest('.slot'))e.preventDefault()});
+document.addEventListener('drop',e=>{
+  const s=e.target.closest&&e.target.closest('.slot');if(!s)return;e.preventDefault();
+  const [i,...v]=e.dataTransfer.getData('text/plain').split('|'),qi=+s.closest('[data-q]').dataset.q;
+  if(+i===qi)put(qi,+s.dataset.k,v.join('|'));
+});
+
+/* ----- chấm điểm ----- */
+function ans(q,i){
+  const b=document.querySelector(`[data-q="${i}"]`);
+  if(q.type==='single'||q.type==='multi')return [...b.querySelectorAll('input:checked')].map(x=>+x.value);
+  if(q.type==='fill')return [...b.querySelectorAll('input')].map(x=>x.value.trim());
+  return P[i];
+}
+function ok(q,a){
+  if(q.type==='single'||q.type==='multi')return a.length===q.answer.length&&q.answer.every(x=>a.includes(x));
+  if(q.type==='fill')return q.answer.every((acc,k)=>[].concat(acc).some(s=>s.toLowerCase()===(a[k]||'').toLowerCase()));
+  return q.pairs.every((p,k)=>a[k]===p[1]);
+}
+const shown=q=>q.type==='fill'?q.answer.map(a=>[].concat(a)[0]).join(' | '):q.type==='drag'?q.pairs.map(p=>p[0]+' → '+p[1]).join('; '):q.answer.map(x=>q.options[x]).join(', ');
+
+async function submit(){
+  const Q=quiz.questions,A=Q.map(ans),R=Q.map((q,i)=>ok(q,A[i])),score=R.filter(Boolean).length;
+  done=true;$('#qs').disabled=true;$('#sub').remove();
+  Q.forEach((q,i)=>document.querySelector(`[data-q="${i}"]`).insertAdjacentHTML('beforeend',R[i]?'<p class="good">✓ Đúng</p>':`<p class="bad">✗ Chưa đúng. Đáp án: ${esc(shown(q))}</p>`));
+  $('#res').innerHTML=`<div class="c"><h2>Điểm: ${score}/${Q.length}</h2><p id="sv">Đang lưu điểm…</p></div>`;
+  $('#res').scrollIntoView({behavior:'smooth'});
+  save(score,Q.length,A);
+}
+async function save(score,total,A){
+  const {error}=await sb.rpc('submit_attempt',{p_class:cls.id,p_student:stu,p_quiz:qid,p_score:score,p_total:total,p_answers:A});
+  $('#sv').innerHTML=error?'<span class="bad">Chưa lưu được điểm.</span> <button id="rt">Thử lại</button>':'<span class="good">Đã lưu điểm ✓</span>';
+  if(error)$('#rt').onclick=()=>save(score,total,A);
+}
+</script></body></html>

@@ -1,0 +1,148 @@
+/* Giao diện học sinh – chỉ dùng cho index.html (admin.html vẫn dùng style.css) */
+:root{
+  --bg:#fff7e3; --ink:#1f2a44; --muted:#5d6785; --card:#fff; --line:#1f2a44;
+  --radius:22px; --shadow:0 5px 0 var(--ink);
+  --blue:#1f67c2;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; min-height:100vh; color:var(--ink);
+  font-family:"Baloo 2","Nunito","Segoe UI",system-ui,sans-serif; font-size:17px; line-height:1.4;
+  background-color:var(--bg);
+  background-image:radial-gradient(rgba(31,42,68,.09) 1.4px,transparent 1.6px);
+  background-size:26px 26px;
+}
+a{color:inherit}
+:focus-visible{outline:4px solid #4da3ff;outline-offset:3px;border-radius:12px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+
+/* ---------- Thanh trên ---------- */
+.topbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:3px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;gap:12px;height:62px}
+.topbar a{display:flex;align-items:center;gap:12px;text-decoration:none;font-weight:800;font-size:21px}
+#siteIcon{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#ffc83d;border:2.5px solid var(--line);font-size:22px;transform:rotate(-6deg)}
+#siteIcon:empty{display:none}
+main.wrap{padding:26px 20px 40px}
+
+/* ---------- Lời chào ---------- */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:4px 0 30px}
+.hero h1{margin:0;font-size:clamp(28px,5vw,42px);line-height:1.1;font-weight:800;letter-spacing:-.5px}
+.hero h1 mark{background:linear-gradient(transparent 58%,#ffc83d 58%);color:inherit;padding:0 4px}
+.hero p{margin:6px 0 0;color:var(--muted);font-weight:600}
+
+/* ---------- Chọn cấp học ---------- */
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{font:inherit;font-weight:800;cursor:pointer;background:#fff;color:var(--ink);border:2.5px solid var(--line);border-radius:999px;padding:6px 20px;box-shadow:0 3px 0 var(--ink);transition:transform .12s,box-shadow .12s,background .12s}
+.tab:hover{transform:translateY(-2px);box-shadow:0 5px 0 var(--ink)}
+.tab[aria-pressed="true"]{background:var(--ink);color:#fff;box-shadow:0 3px 0 #000}
+.tab:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.badge-group{font-weight:800;background:#fff;border:2.5px solid var(--line);border-radius:999px;padding:6px 20px;box-shadow:0 3px 0 var(--ink)}
+
+/* ---------- Tiêu đề mục ---------- */
+.sec-head{display:flex;align-items:center;gap:12px;margin:0 0 16px}
+.sec-head h2{margin:0;font-size:24px;font-weight:800;display:flex;align-items:center;gap:10px}
+.sec-head .sico{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#fff;border:2.5px solid var(--line);font-size:22px;box-shadow:0 3px 0 var(--ink)}
+.prog{margin-bottom:36px}
+
+/* ---------- Màu theo level ---------- */
+.yellow{--c:#ffc83d;--cd:#c98f00;--ct:#fff2c9}
+.orange{--c:#ff9a3d;--cd:#c75f00;--ct:#ffe4cc}
+.red{--c:#ff6b5b;--cd:#c23b2a;--ct:#ffdeda}
+.green{--c:#3fcb7a;--cd:#1e8f4e;--ct:#d8f5e4}
+.blue{--c:#4da3ff;--cd:#1f67c2;--ct:#dbeaff}
+.purple{--c:#a57bff;--cd:#6a3fc4;--ct:#eadfff}
+.teal{--c:#2fcfc9;--cd:#138a86;--ct:#d4f5f3}
+.pink{--c:#ff7ab6;--cd:#c23d7f;--ct:#ffdfee}
+.level,.banner,.rcard{--c:#4da3ff;--cd:#1f67c2;--ct:#dbeaff}
+.level.yellow,.banner.yellow,.rcard.yellow{--c:#ffc83d;--cd:#c98f00;--ct:#fff2c9}
+.level.orange,.banner.orange,.rcard.orange{--c:#ff9a3d;--cd:#c75f00;--ct:#ffe4cc}
+.level.red,.banner.red,.rcard.red{--c:#ff6b5b;--cd:#c23b2a;--ct:#ffdeda}
+.level.green,.banner.green,.rcard.green{--c:#3fcb7a;--cd:#1e8f4e;--ct:#d8f5e4}
+.level.purple,.banner.purple,.rcard.purple{--c:#a57bff;--cd:#6a3fc4;--ct:#eadfff}
+.level.teal,.banner.teal,.rcard.teal{--c:#2fcfc9;--cd:#138a86;--ct:#d4f5f3}
+.level.pink,.banner.pink,.rcard.pink{--c:#ff7ab6;--cd:#c23d7f;--ct:#ffdfee}
+
+/* ---------- Thẻ Level ---------- */
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:22px}
+.level{display:flex;flex-direction:column;text-decoration:none;background:var(--card);border:3px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;transition:transform .15s,box-shadow .15s}
+.level:hover{transform:translateY(-6px);box-shadow:0 11px 0 var(--ink)}
+.level:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.level .top{position:relative;background:var(--c);border-bottom:3px solid var(--line);padding:26px 16px 22px;display:grid;place-items:center;overflow:hidden}
+.level .top::before,.level .top::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.28)}
+.level .top::before{width:120px;height:120px;left:-36px;top:-40px}
+.level .top::after{width:80px;height:80px;right:-22px;bottom:-30px}
+.level .ico{position:relative;z-index:1;display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:#fff;border:3px solid var(--line);font-size:44px;line-height:1;transition:transform .2s}
+.level:hover .ico{transform:rotate(-8deg) scale(1.08)}
+.level .body{padding:16px 18px 20px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
+.level h3{margin:0;font-size:24px;font-weight:800;line-height:1.1}
+.count{font-weight:700;font-size:15px;color:var(--ink);background:var(--ct);border-radius:999px;padding:2px 14px}
+.go{display:inline-flex;align-items:center;gap:8px;font-weight:800;background:var(--ink);color:#fff;border-radius:999px;padding:8px 22px}
+.go i{font-style:normal;transition:transform .15s}
+.level:hover .go i,a.k12:hover .go i{transform:translateX(4px)}
+
+/* ---------- Trang danh sách bài ôn ---------- */
+.back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:800;background:#fff;border:2.5px solid var(--line);border-radius:999px;padding:6px 18px 6px 14px;box-shadow:0 3px 0 var(--ink);margin-bottom:18px;transition:transform .12s,box-shadow .12s}
+.back:hover{transform:translateY(-2px);box-shadow:0 5px 0 var(--ink)}
+.banner{display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--c);border:3px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 24px;margin-bottom:26px}
+.banner .ico{display:grid;place-items:center;flex:none;width:72px;height:72px;border-radius:50%;background:#fff;border:3px solid var(--line);font-size:38px}
+.banner .info{flex:1;min-width:200px}
+.banner h1{margin:0;font-size:clamp(24px,4.5vw,34px);font-weight:800;line-height:1.1}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:20px}
+.rcard{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:190px;padding:26px 14px 18px;text-align:center;text-decoration:none;background:var(--card);border:3px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
+.rcard .num{display:grid;place-items:center;width:62px;height:62px;border-radius:50%;background:var(--c);border:3px solid var(--line);font-size:28px;font-weight:800;transition:transform .2s}
+.rcard b{font-size:19px;font-weight:800;line-height:1.2}
+.rcard .tag{font-weight:800;font-size:14px;border-radius:999px;padding:3px 16px;background:var(--ct)}
+.rcard.on:hover{transform:translateY(-6px);box-shadow:0 11px 0 var(--ink)}
+.rcard.on:hover .num{transform:rotate(-10deg) scale(1.1)}
+.rcard.on:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.rcard.off{background:#f1efe8;border-style:dashed;box-shadow:none;color:var(--muted);cursor:default}
+.rcard.off .num{background:#e3e0d6;color:var(--muted)}
+.rcard.off .tag{background:#e3e0d6}
+
+/* ---------- Hỗ trợ học tập ---------- */
+.support{display:grid;grid-template-columns:minmax(230px,1fr) 2.2fr;gap:22px}
+.k12{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:230px;padding:24px;text-align:center;text-decoration:none;background:#4da3ff;border:3px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
+a.k12[href]:hover{transform:translateY(-6px);box-shadow:0 11px 0 var(--ink)}
+.k12 .ico{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:#fff;border:3px solid var(--line);font-size:44px}
+.k12 b{font-size:24px;font-weight:800}
+.guide{background:#fff;border:3px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px}
+.guide h3{margin:0 0 14px;font-size:22px;font-weight:800}
+.guide ol{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:10px;counter-reset:s}
+.guide li{counter-increment:s;display:flex;align-items:flex-start;gap:12px;font-weight:600;font-size:17px}
+.guide li::before{content:counter(s);flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#ffc83d;border:2.5px solid var(--line);font-weight:800;font-size:16px;margin-top:-2px}
+.guide li b{background:#fff2c9;border-radius:6px;padding:0 5px}
+.pw{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-weight:800;background:#eaf3ff;border:2.5px dashed var(--blue);border-radius:16px;padding:10px 14px;margin-bottom:10px}
+.pw code{font:inherit;font-weight:800;letter-spacing:.5px;background:#fff;border:2px solid var(--line);border-radius:10px;padding:2px 12px;user-select:all}
+.copy{font:inherit;font-weight:800;cursor:pointer;color:#fff;background:var(--ink);border:0;border-radius:999px;padding:6px 18px;margin-left:auto;transition:transform .1s}
+.copy:active{transform:scale(.95)}
+.vid{font-weight:700}
+.vid a{font-weight:800;color:var(--blue)}
+
+.empty{padding:40px 20px;text-align:center;color:var(--muted);font-weight:700;background:rgba(255,255,255,.7);border:3px dashed #cfc8ae;border-radius:var(--radius)}
+
+@media(max-width:700px){
+  body{font-size:16px}
+  .wrap{padding:0 14px}
+  main.wrap{padding:18px 14px 34px}
+  .topbar .wrap{height:56px}
+  .support{grid-template-columns:1fr}
+  .k12{min-height:170px}
+  .levels{gap:18px}
+  .rgrid{grid-template-columns:repeat(2,1fr);gap:16px}
+  .rcard{min-height:170px;padding:22px 10px 16px}
+  .rcard b{font-size:17px}
+  .banner{padding:16px}
+  .copy{margin-left:0}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+@media(max-width:700px){
+  .levels{grid-template-columns:1fr;gap:16px}
+  .level{flex-direction:row;align-items:stretch}
+  .level .top{flex:none;width:112px;padding:0;border-bottom:0;border-right:3px solid var(--line)}
+  .level .ico{width:68px;height:68px;font-size:36px}
+  .level .body{flex:1;align-items:flex-start;text-align:left;gap:8px;padding:14px 16px;justify-content:center}
+  .level h3{font-size:22px}
+  .go{padding:6px 18px;font-size:15px}
+}

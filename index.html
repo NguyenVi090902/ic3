@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trang chủ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="student.css">
+</head>
+<body>
+<div class="topbar"><div class="wrap"><a href="#/"><span id="siteIcon"></span><span id="siteTitle"></span></a></div></div>
+<main class="wrap" id="app"><div class="empty">Đang tải…</div></main>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl=u=>/^(https?:\/\/|quiz\.html\?)/i.test(u||'')?u:'';
+const md=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+let D,cur=0;
+
+function render(){
+  document.getElementById('siteIcon').textContent=D.siteIcon||'';
+  document.getElementById('siteTitle').textContent=D.siteTitle||'';
+  document.title=D.siteTitle||'Trang chủ';
+  const groups=D.groups||[], g=groups[cur]||{programs:[]};
+
+  let h=`<section class="hero"><div><h1>Chào bạn! Cùng <mark>ôn bài</mark> nào 👋</h1><p>Chọn level của bạn để bắt đầu nhé.</p></div>`;
+  if(groups.length>1) h+=`<div class="tabs" role="group" aria-label="Chọn cấp học">${groups.map((x,j)=>`<button class="tab" data-g="${j}" aria-pressed="${j===cur}">${esc(x.name)}</button>`).join('')}</div>`;
+  else if(groups.length===1) h+=`<span class="badge-group">${esc(g.name)}</span>`;
+  h+=`</section>`;
+
+  const progs=g.programs||[];
+  progs.forEach((p,i)=>{
+    h+=`<section class="prog"><div class="sec-head"><h2><span class="sico">${esc(p.icon)}</span>${esc(p.title)}</h2></div><div class="levels">`;
+    h+=(p.levels||[]).map((l,li)=>{
+      return `<a class="level ${esc(l.color)}" href="#/${cur}/${i}/${li}">
+        <div class="top"><div class="ico">${esc(l.icon)}</div></div>
+        <div class="body"><h3>${esc(l.name)}</h3><span class="go">Bấm để mở <i>→</i></span></div></a>`;
+    }).join('')+`</div></section>`;
+  });
+  if(!progs.length&&groups.length) h+=`<div class="empty">Chưa có chương trình nào.</div>`;
+
+  const s=D.support;
+  if(s){
+    const vu=safeUrl(s.videoUrl), cu=safeUrl(s.cardUrl);
+    h+=`<section class="prog"><div class="sec-head"><h2><span class="sico">${esc(s.icon)}</span>${esc(s.title)}</h2></div>
+    <div class="support">
+      <a class="k12" ${cu?`href="${esc(cu)}" target="_blank" rel="noopener"`:''}><span class="ico">${esc(s.cardIcon)}</span><b>${esc(s.cardName)}</b>${cu?'<span class="go">Bấm để mở <i>→</i></span>':''}</a>
+      <div class="guide"><h3>📝 ${esc(s.guideTitle)}</h3>
+        <ol>${(s.steps||[]).map(x=>`<li><span>${md(x)}</span></li>`).join('')}</ol>
+        ${s.password?`<div class="pw">🔑 ${esc(s.passwordLabel)} <code id="pw">${esc(s.password)}</code><button class="copy" id="cp">Sao chép</button></div>`:''}
+        ${vu?`<div class="vid">🎬 <a href="${esc(vu)}" target="_blank" rel="noopener">${esc(s.videoText)}</a></div>`:''}
+      </div></div></section>`;
+  }
+  document.getElementById('app').innerHTML=h;
+
+  document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{cur=+b.dataset.g;render()});
+  const cp=document.getElementById('cp');
+  if(cp)cp.onclick=async()=>{
+    const t=D.support.password;
+    try{await navigator.clipboard.writeText(t)}catch{const r=document.createRange();r.selectNode(document.getElementById('pw'));getSelection().removeAllRanges();getSelection().addRange(r);document.execCommand('copy')}
+    cp.textContent='Đã chép ✓';setTimeout(()=>cp.textContent='Sao chép',1500);
+  };
+}
+
+function renderReview(gi,pi,li){
+  const l=(((D.groups[gi]||{}).programs||[])[pi]||{}).levels?.[li];
+  if(!l){location.hash='#/';return}
+  const items=l.reviews||[];
+  document.getElementById('app').innerHTML=`<a class="back" href="#/">← Quay lại</a>
+  <div class="banner ${esc(l.color)}"><div class="ico">${esc(l.icon||'📝')}</div>
+    <div class="info"><h1>${esc(l.name)}</h1></div></div>
+  <div class="rgrid">`+(items.length?items.map((r,n)=>{
+    const u=safeUrl(r.url);
+    return u?`<a class="rcard on ${esc(l.color)}" href="${esc(u)}" target="_blank" rel="noopener"><span class="num">${n+1}</span><b>${esc(r.name)}</b><span class="tag">Bắt đầu</span></a>`
+            :`<div class="rcard off ${esc(l.color)}"><span class="num">${n+1}</span><b>${esc(r.name)}</b><span class="tag">Sắp có</span></div>`;
+  }).join(''):'<div class="empty" style="grid-column:1/-1">Chưa có bài ôn nào.</div>')+`</div>`;
+}
+
+function setBrand(){
+  document.getElementById('siteIcon').textContent=D.siteIcon||'';
+  document.getElementById('siteTitle').textContent=D.siteTitle||'';
+  document.title=D.siteTitle||'Trang chủ';
+}
+function route(){
+  setBrand();
+  const m=location.hash.match(/^#\/(\d+)\/(\d+)\/(\d+)$/);
+  if(m){cur=+m[1];renderReview(+m[1],+m[2],+m[3])}else render();
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',()=>D&&route());
+const sc=document.createElement('script');
+sc.src='data.js?v='+Date.now();
+sc.onload=()=>{D=window.SITE_DATA;route()};
+sc.onerror=()=>document.getElementById('app').innerHTML='<div class="empty">Không tải được dữ liệu (data.js).</div>';
+document.body.appendChild(sc);
+</script>
+</body>
+</html>

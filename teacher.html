@@ -1,0 +1,85 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Giáo viên</title><meta name="robots" content="noindex">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<style>
+body{font-family:system-ui,sans-serif;background:#fffaf0;margin:0;color:#222}
+main{max-width:960px;margin:0 auto;padding:16px}
+.c{background:#fff;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 8px #0001}
+input,select,textarea{font:inherit;padding:8px 10px;border:1.5px solid #d9d4c3;border-radius:10px;margin:4px 0;max-width:100%;box-sizing:border-box}
+textarea{width:100%;font-family:monospace;font-size:13px}
+button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:8px 16px;background:#2f6fed;color:#fff;cursor:pointer;margin:2px}
+button.g{background:#e9e3cf;color:#333}.tabs{display:flex;flex-wrap:wrap;gap:4px}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{border-bottom:1px solid #eee;padding:6px 8px;text-align:left}
+.bad{color:#b42318}.good{color:#1a7f37}code{background:#f3efe0;padding:2px 6px;border-radius:6px}
+</style></head><body><main id="app"></main>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sb=supabase.createClient(SB.url,SB.key),app=$('#app'),TYPES=['single','multi','fill','drag'];
+const rc=()=>Array.from({length:6},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random()*32|0]).join('');
+const dl=(name,rows)=>{const t='\ufeff'+rows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name;a.click()};
+
+sb.auth.getSession().then(({data})=>data.session?shell():login());
+function login(){
+  app.innerHTML=`<div class="c"><h2>Đăng nhập giáo viên</h2><input id="em" placeholder="Email"><br><input id="pw" type="password" placeholder="Mật khẩu"><br><button id="li">Đăng nhập</button><p id="m" class="bad"></p></div>`;
+  $('#li').onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});error?$('#m').textContent=error.message:shell()};
+}
+function shell(){
+  app.innerHTML=`<div class="tabs"><button data-t="Res">📊 Kết quả</button><button data-t="Cls">🏫 Lớp & học sinh</button><button data-t="Qz">❓ Câu hỏi</button><button class="g" id="lo">Thoát</button></div><div id="body"></div>`;
+  app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>window['v'+b.dataset.t]());
+  $('#lo').onclick=async()=>{await sb.auth.signOut();login()};vRes();
+}
+
+async function vRes(){
+  const [{data:qz},{data:cl}]=await Promise.all([sb.from('quizzes').select('id,title'),sb.from('classes').select('id,school,name').order('school').order('name')]);
+  $('#body').innerHTML=`<div class="c"><select id="fq"><option value="">Tất cả bài</option>${(qz||[]).map(q=>`<option value="${esc(q.id)}">${esc(q.title)}</option>`).join('')}</select>
+    <select id="fc"><option value="">Tất cả lớp</option>${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.school)} - ${esc(c.name)}</option>`).join('')}</select>
+    <button id="ex">⬇ Xuất CSV</button><div style="overflow-x:auto"><table id="tb"></table></div></div>`;
+  const H=['Thời gian','Trường','Lớp','Học sinh','Bài','Điểm'];let rows=[];
+  const load=async()=>{
+    let q=sb.from('attempts').select('created_at,quiz_id,student_name,score,total,classes(school,name)').order('created_at',{ascending:false}).limit(1000);
+    if($('#fq').value)q=q.eq('quiz_id',$('#fq').value);if($('#fc').value)q=q.eq('class_id',$('#fc').value);
+    const {data}=await q;
+    rows=(data||[]).map(r=>[new Date(r.created_at).toLocaleString('vi-VN'),r.classes?.school||'',r.classes?.name||'',r.student_name,r.quiz_id,r.score+'/'+r.total]);
+    $('#tb').innerHTML='<tr>'+H.map(h=>`<th>${h}`).join('')+'</tr>'+rows.map(r=>'<tr>'+r.map(x=>`<td>${esc(x)}`).join('')+'</tr>').join('');
+  };
+  $('#fq').onchange=$('#fc').onchange=load;$('#ex').onclick=()=>dl('ket-qua.csv',[H,...rows]);load();
+}
+
+async function vCls(){
+  const {data}=await sb.from('classes').select('id,school,name,code,students(count)').order('school').order('name');
+  $('#body').innerHTML=`<div class="c"><h3>Thêm danh sách học sinh</h3><p>Dán từ Excel, mỗi dòng: <code>Trường, Lớp, Họ tên</code>. Nhập lại tên đã có sẽ được bỏ qua.</p>
+    <textarea id="ro" rows="8" placeholder="Tiểu học A	3A	Nguyễn Văn An"></textarea><button id="imp">Nhập</button> <span id="m" class="bad"></span></div>
+    <div class="c"><table><tr><th>Trường<th>Lớp<th>Mã lớp (đưa cho học sinh)<th>Số HS<th></tr>${(data||[]).map(c=>`<tr><td>${esc(c.school)}<td>${esc(c.name)}<td><b>${c.code}</b><td>${c.students[0].count}<td><button class="g" data-del="${c.id}">Xóa</button></tr>`).join('')}</table></div>`;
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(confirm('Xóa lớp và học sinh trong lớp?')){await sb.from('classes').delete().eq('id',b.dataset.del);vCls()}});
+  $('#imp').onclick=async()=>{
+    const L=$('#ro').value.split('\n').map(l=>l.split(/\t|,/).map(x=>x.trim())).filter(r=>r.length>=3&&r[0]&&r[1]&&r[2]),
+      ex=Object.fromEntries((data||[]).map(c=>[c.school+'|'+c.name,c.id])),by={};
+    L.forEach(r=>(by[r[0]+'|'+r[1]]??=[]).push(r.slice(2).join(' ')));
+    for(const [k,names] of Object.entries(by)){
+      let id=ex[k];
+      if(!id){const [school,name]=k.split('|'),{data:n,error}=await sb.from('classes').insert({school,name,code:rc()}).select('id').single();if(error)return $('#m').textContent=error.message;id=n.id}
+      const {error}=await sb.from('students').upsert(names.map(name=>({class_id:id,name})),{onConflict:'class_id,name',ignoreDuplicates:true});
+      if(error)return $('#m').textContent=error.message;
+    }
+    vCls();
+  };
+}
+
+async function vQz(){
+  const {data}=await sb.from('quizzes').select('id,title,questions').order('created_at',{ascending:false}),Z=data||[];
+  $('#body').innerHTML=`<div class="c"><h3>Thêm / sửa bài ôn</h3><input id="qi" placeholder="Mã bài, vd: spark-lv2-bai1" size="28"> <input id="qt" placeholder="Tiêu đề bài" size="30">
+    <textarea id="qj" rows="12" placeholder='Dán JSON câu hỏi (xem sample-questions.json)'></textarea><input type="file" id="qf" accept=".json"> <button id="sv">Lưu bài</button> <span id="m" class="bad"></span></div>
+    <div class="c"><table><tr><th>Bài<th>Số câu<th>Link dán vào admin (data.js)<th></tr>${Z.map((q,i)=>`<tr><td>${esc(q.title)}<td>${q.questions.length}<td><code>quiz.html?q=${esc(q.id)}</code><td><button class="g" data-ed="${i}">Sửa</button><button class="g" data-rm="${i}">Xóa</button></tr>`).join('')}</table></div>`;
+  $('#qf').onchange=async e=>{$('#qj').value=await e.target.files[0].text()};
+  document.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{const q=Z[b.dataset.ed];$('#qi').value=q.id;$('#qt').value=q.title;$('#qj').value=JSON.stringify(q.questions,null,1);scrollTo(0,0)});
+  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{if(confirm('Xóa bài này và toàn bộ điểm của bài?')){await sb.from('quizzes').delete().eq('id',Z[b.dataset.rm].id);vQz()}});
+  $('#sv').onclick=async()=>{
+    const id=$('#qi').value.trim(),title=$('#qt').value.trim();let qs;
+    try{qs=JSON.parse($('#qj').value)}catch(e){return $('#m').textContent='JSON sai: '+e.message}
+    if(!/^[\w-]+$/.test(id)||!title)return $('#m').textContent='Mã bài chỉ gồm chữ/số/gạch ngang; cần có tiêu đề';
+    const bad=!Array.isArray(qs)||!qs.length||qs.findIndex(q=>!TYPES.includes(q.type)||!q.text||(q.type==='drag'?!q.pairs:!q.answer));
+    if(bad!==false)return $('#m').textContent='Câu hỏi không hợp lệ'+(typeof bad==='number'?' (câu '+(bad+1)+')':'');
+    const {error}=await sb.from('quizzes').upsert({id,title,questions:qs});error?$('#m').textContent=error.message:vQz();
+  };
+}
+</script></body></html>

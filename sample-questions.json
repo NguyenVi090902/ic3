@@ -1,0 +1,7 @@
+[
+  {"type":"single","text":"Thiết bị nào dùng để nhập dữ liệu?","options":["Bàn phím","Màn hình","Loa"],"answer":[0]},
+  {"type":"multi","text":"Chọn các thiết bị xuất (output):","options":["Máy in","Chuột","Loa","Micro"],"answer":[0,2]},
+  {"type":"fill","text":"Phím tắt để sao chép là Ctrl + ___ .","answer":[["C","c"]]},
+  {"type":"fill","text":"___ là bộ não của máy tính, còn ___ dùng để lưu trữ lâu dài.","answer":[["CPU"],["ổ cứng","Ổ cứng"]]},
+  {"type":"drag","text":"Kéo thiết bị vào đúng nhóm:","pairs":[["Chuột","Nhập"],["Máy in","Xuất"],["Loa","Xuất"]]}
+]

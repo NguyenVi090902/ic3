@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quản trị link</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.card{background:#fff;border-radius:16px;padding:18px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.card h3{margin:0 0 12px;font-size:18px}
+label{display:block;font-size:13px;font-weight:700;margin:8px 0 3px;color:#555}
+input,select,textarea{width:100%;font:inherit;font-size:14px;padding:8px 10px;border:1.5px solid #d9d4c3;border-radius:10px;background:#fffdf7}
+textarea{min-height:110px;resize:vertical}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:90px 1fr 120px;gap:10px}
+.g3r{display:grid;grid-template-columns:150px 1fr 44px;gap:8px;margin:6px 0}
+.sub{border:1.5px dashed #d9d4c3;border-radius:12px;padding:12px;margin:10px 0}
+.lv{border-left:5px solid #f3d089;background:#fffaf0;border-radius:10px;padding:10px 12px;margin:10px 0}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+button.b{border:0;border-radius:999px;padding:8px 16px;font:inherit;font-weight:700;cursor:pointer;background:#e9e3cf;color:#333}
+button.b.p{background:var(--blue);color:#fff}
+button.b.d{background:#fde0dc;color:#b42318}
+.sticky{position:sticky;bottom:0;background:#fffdf7ee;padding:12px 0;border-top:1px solid #eadfbb;display:flex;gap:10px;flex-wrap:wrap;align-items:center;z-index:3}
+#msg{font-weight:700}
+.ok{color:#1a7f37}.err{color:#b42318}
+details summary{cursor:pointer;font-weight:800;font-size:18px}
+small{color:#777}
+@media(max-width:600px){.g3r,.g2,.g3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="wrap">⚙️ Quản trị link <a href="index.html" style="margin-left:auto;font-size:14px">← Xem trang</a></div></div>
+<main class="wrap">
+<div class="card">
+<details id="conn"><summary>🔐 Kết nối GitHub (để lưu thay đổi lên web)</summary>
+<small>Token chỉ lưu trong trình duyệt này, không nằm trong code. Cách tạo token xem README.</small>
+<div class="g2">
+<div><label>Tên tài khoản (owner)</label><input id="owner"></div>
+<div><label>Tên repository</label><input id="repo"></div>
+<div><label>Nhánh (branch)</label><input id="branch" value="main"></div>
+<div><label>Fine-grained Token (quyền Contents: Read & write)</label><input id="token" type="password" autocomplete="off"></div>
+</div>
+<div class="bar"><label style="margin:0"><input type="checkbox" id="remember" style="width:auto"> Nhớ token trên máy này</label></div>
+</details></div>
+<div id="editor"><div class="empty">Đang tải…</div></div>
+<div class="sticky">
+<button class="b p" id="save">💾 Lưu lên GitHub</button>
+<button class="b" id="dl">⬇ Tải data.js</button>
+<button class="b" id="reload">↻ Tải lại</button>
+<span id="msg"></span>
+</div>
+</main>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const COLORS={yellow:'Vàng',orange:'Cam',red:'Đỏ',green:'Xanh lá',blue:'Xanh dương',purple:'Tím',teal:'Xanh ngọc',pink:'Hồng'};
+let D;
+const $=id=>document.getElementById(id);
+const msg=(t,c)=>{$('msg').textContent=t;$('msg').className=c||''};
+
+// auto-detect owner/repo from github.io URL
+(function(){
+  const s=JSON.parse(localStorage.getItem('gh_conn')||'{}');
+  const m=location.hostname.match(/^(.+)\.github\.io$/);
+  $('owner').value=s.owner||(m?m[1]:'');
+  $('repo').value=s.repo||(m?location.pathname.split('/')[1]||'':'');
+  $('branch').value=s.branch||'main';
+  if(s.token){$('token').value=s.token;$('remember').checked=true}
+  else $('conn').open=true;
+})();
+
+function parse(txt){return JSON.parse(txt.replace(/^[^{]*/,'').replace(/;\s*$/,''))}
+function load(){
+  const old=document.getElementById('dataScript');if(old)old.remove();
+  delete window.SITE_DATA;
+  const sc=document.createElement('script');sc.id='dataScript';
+  sc.src='data.js?v='+Date.now();
+  sc.onload=()=>{D=JSON.parse(JSON.stringify(window.SITE_DATA));
+    D.groups.forEach(g=>g.programs.forEach(p=>p.levels.forEach(l=>{l.reviews=l.reviews||[];l.reviewTitle=l.reviewTitle??('Ôn tập '+l.name);l.reviewIcon=l.reviewIcon||'📝';delete l.lessonUrl;delete l.reviewUrl})));
+    render();msg('')};
+  sc.onerror=()=>{$('editor').innerHTML='<div class="empty">Không tải được data.js</div>'};
+  document.body.appendChild(sc);
+}
+function opts(sel){return Object.entries(COLORS).map(([k,v])=>`<option value="${k}"${k===sel?' selected':''}>${v}</option>`).join('')}
+function input(p,label,v,ph){return `<div><label>${label}</label><input data-p="${p}" value="${esc(v)}" placeholder="${esc(ph||'')}"></div>`}
+
+function render(){
+  let h=`<div class="card"><h3>🏠 Thông tin chung</h3><div class="g3">${input('siteIcon','Icon',D.siteIcon)}${input('siteTitle','Tiêu đề trang',D.siteTitle)}<div></div></div></div>`;
+  D.groups.forEach((g,gi)=>{
+    h+=`<div class="card"><h3>🎓 Cấp học</h3>
+      <div class="g2">${input(`groups.${gi}.name`,'Tên cấp học (nút góc phải)',g.name)}
+      <div class="bar" style="align-items:end"><button class="b d" data-act="delGroup" data-i="${gi}">Xóa cấp học này</button></div></div>`;
+    g.programs.forEach((p,pi)=>{
+      h+=`<div class="sub"><div class="g3">${input(`groups.${gi}.programs.${pi}.icon`,'Icon',p.icon)}${input(`groups.${gi}.programs.${pi}.title`,'Tên chương trình',p.title)}<div class="bar" style="align-items:end"><button class="b d" data-act="delProg" data-g="${gi}" data-i="${pi}">Xóa</button></div></div>`;
+      p.levels.forEach((l,li)=>{
+        const b=`groups.${gi}.programs.${pi}.levels.${li}`;
+        h+=`<div class="lv"><div class="g3">${input(b+'.icon','Icon',l.icon)}${input(b+'.name','Tên ô (vd: Level 1)',l.name)}
+          <div><label>Màu</label><select data-p="${b}.color">${opts(l.color)}</select></div></div>
+          <div class="g2">${input(b+'.reviewTitle','Tiêu đề trang Ôn tập',l.reviewTitle,'Ôn tập SPARK Level 1')}${input(b+'.reviewIcon','Icon các ô bài ôn',l.reviewIcon)}</div>
+          <label>Các bài ôn (${(l.reviews||[]).length} bài) — để trống link = hiện “Sắp có”</label>
+          ${(l.reviews||[]).map((r,ri)=>`<div class="g3r"><input data-p="${b}.reviews.${ri}.name" value="${esc(r.name)}" placeholder="Tên bài"><input data-p="${b}.reviews.${ri}.url" value="${esc(r.url)}" placeholder="https://..."><button class="b d" data-act="delRv" data-g="${gi}" data-p="${pi}" data-i="${li}" data-r="${ri}">✕</button></div>`).join('')}
+          <div class="bar"><button class="b" data-act="addRv" data-g="${gi}" data-p="${pi}" data-i="${li}">+ Thêm bài ôn</button>
+            <span>hoặc đặt số lượng:</span><input type="number" min="0" max="100" id="cnt-${gi}-${pi}-${li}" value="${(l.reviews||[]).length}" style="width:80px"><button class="b" data-act="setCount" data-g="${gi}" data-p="${pi}" data-i="${li}">Áp dụng</button></div>
+          <div class="bar"><button class="b" data-act="up" data-g="${gi}" data-p="${pi}" data-i="${li}">↑</button><button class="b" data-act="down" data-g="${gi}" data-p="${pi}" data-i="${li}">↓</button><button class="b d" data-act="delLv" data-g="${gi}" data-p="${pi}" data-i="${li}">Xóa ô</button></div></div>`;
+      });
+      h+=`<button class="b" data-act="addLv" data-g="${gi}" data-i="${pi}">+ Thêm ô Level</button></div>`;
+    });
+    h+=`<div class="bar"><button class="b" data-act="addProg" data-i="${gi}">+ Thêm chương trình</button></div></div>`;
+  });
+  h+=`<div class="card"><button class="b p" data-act="addGroup">+ Thêm cấp học (vd: THCS)</button></div>`;
+  const s=D.support;
+  h+=`<div class="card"><h3>🌐 Web hỗ trợ học tập</h3>
+    <div class="g3">${input('support.icon','Icon',s.icon)}${input('support.title','Tiêu đề mục',s.title)}<div></div></div>
+    <div class="g3">${input('support.cardIcon','Icon thẻ',s.cardIcon)}${input('support.cardName','Tên thẻ (vd: K12 Online)',s.cardName)}<div></div></div>
+    ${input('support.cardUrl','Link khi bấm vào thẻ',s.cardUrl,'https://...')}
+    ${input('support.guideTitle','Tiêu đề khung hướng dẫn',s.guideTitle)}
+    <label>Các bước hướng dẫn (mỗi dòng 1 bước, dùng **chữ** để in đậm)</label>
+    <textarea data-p="support.steps" data-lines="1">${esc((s.steps||[]).join('\n'))}</textarea>
+    <div class="g2">${input('support.passwordLabel','Nhãn mật khẩu',s.passwordLabel)}${input('support.password','Mật khẩu chung (để trống = ẩn)',s.password)}
+    ${input('support.videoText','Chữ link video',s.videoText)}${input('support.videoUrl','Link video hướng dẫn (trống = ẩn)',s.videoUrl,'https://...')}</div></div>`;
+  $('editor').innerHTML=h;
+}
+function setPath(p,v){const k=p.split('.');let o=D;for(let i=0;i<k.length-1;i++)o=o[k[i]];o[k[k.length-1]]=v}
+document.addEventListener('input',e=>{
+  const p=e.target.dataset.p;if(!p)return;
+  setPath(p,e.target.dataset.lines?e.target.value.split('\n').map(x=>x.trim()).filter(Boolean):e.target.value);
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,g=+b.dataset.g,i=+b.dataset.i,p=+b.dataset.p;
+  if(a==='addGroup')D.groups.push({name:'Cấp học mới',programs:[]});
+  if(a==='delGroup'&&confirm('Xóa cả cấp học này?'))D.groups.splice(i,1);
+  if(a==='addProg')D.groups[i].programs.push({title:'Chương trình mới',icon:'⭐',levels:[]});
+  if(a==='delProg'&&confirm('Xóa chương trình này?'))D.groups[g].programs.splice(i,1);
+  if(a==='addLv')D.groups[g].programs[i].levels.push({name:'Level mới',icon:'🌟',color:'blue',reviewTitle:'Ôn tập Level mới',reviewIcon:'📝',reviews:[]});
+  if(a==='delLv'&&confirm('Xóa ô này?'))D.groups[g].programs[p].levels.splice(i,1);
+  const LV=()=>D.groups[g].programs[p].levels[i];
+  if(a==='addRv'){const R=LV().reviews;R.push({name:'Bài ôn '+(R.length+1),url:''})}
+  if(a==='delRv')LV().reviews.splice(+b.dataset.r,1);
+  if(a==='setCount'){const n=Math.max(0,Math.min(100,parseInt($(`cnt-${g}-${p}-${i}`).value)||0)),R=LV().reviews;
+    if(n<R.length&&!confirm('Giảm xuống '+n+' bài sẽ xóa các bài cuối. Tiếp tục?'))return;
+    while(R.length>n)R.pop();while(R.length<n)R.push({name:'Bài ôn '+(R.length+1),url:''})}
+  if(a==='up'||a==='down'){const L=D.groups[g].programs[p].levels,j=a==='up'?i-1:i+1;if(j>=0&&j<L.length)[L[i],L[j]]=[L[j],L[i]]}
+  render();
+});
+const out=()=>'window.SITE_DATA = '+JSON.stringify(D,null,2)+';\n';
+$('dl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out()],{type:'text/javascript'}));a.download='data.js';a.click()};
+$('reload').onclick=()=>{if(confirm('Bỏ thay đổi chưa lưu và tải lại?'))load()};
+$('save').onclick=async()=>{
+  const owner=$('owner').value.trim(),repo=$('repo').value.trim(),branch=$('branch').value.trim()||'main',token=$('token').value.trim();
+  if(!owner||!repo||!token){$('conn').open=true;return msg('Cần nhập owner, repo và token','err')}
+  localStorage.setItem('gh_conn',JSON.stringify({owner,repo,branch,token:$('remember').checked?token:''}));
+  msg('Đang lưu…');
+  const url=`https://api.github.com/repos/${owner}/${repo}/contents/data.js`;
+  const H={Authorization:'Bearer '+token,Accept:'application/vnd.github+json'};
+  try{
+    const r1=await fetch(url+'?ref='+encodeURIComponent(branch),{headers:H});
+    if(!r1.ok&&r1.status!==404)throw new Error(r1.status===401||r1.status===403?'Token sai hoặc thiếu quyền':'Lỗi đọc file ('+r1.status+')');
+    const sha=r1.ok?(await r1.json()).sha:undefined;
+    const bytes=new TextEncoder().encode(out());let bin='';bytes.forEach(c=>bin+=String.fromCharCode(c));
+    const r2=await fetch(url,{method:'PUT',headers:H,body:JSON.stringify({message:'Cập nhật link từ trang quản trị',content:btoa(bin),sha,branch})});
+    if(!r2.ok)throw new Error((await r2.json()).message||('Lỗi '+r2.status));
+    msg('Đã lưu ✓ Web sẽ cập nhật sau khoảng 1–2 phút.','ok');
+  }catch(e){msg('Lỗi: '+e.message,'err')}
+};
+load();
+</script>
+</body>
+</html>
