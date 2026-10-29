@@ -22,12 +22,15 @@ input,select{font:inherit}
 .opt:disabled{cursor:default}.tx{flex:1}.rs{font-weight:700;font-size:26px}
 .mkr{flex:none;width:26px;height:26px;border:2.5px solid #9aa4b8;border-radius:50%;background:#fff}.mkr.sq{border-radius:7px}
 .opt.on{border-color:var(--pri);background:#eaf1ff}.opt.on .mkr{border-color:var(--pri);background:var(--pri);box-shadow:inset 0 0 0 5px #fff}
-.opt.right,.mrow.good,.slot.good{border-color:var(--ok);background:#e9f7f0}.opt.right .rs{color:#16794f}
-.opt.wrong,.mrow.bad,.slot.bad{border-color:var(--no);background:#fdeceb}.opt.wrong .rs{color:#b42318}
+.opt.right,.slot.good{border-color:var(--ok);background:#e9f7f0}.opt.right .rs{color:#16794f}
+.opt.wrong,.slot.bad{border-color:var(--no);background:#fdeceb}.opt.wrong .rs{color:#b42318}
 .fillq input{width:9ch;text-align:center;font-size:inherit;font-weight:700;border:0;border-bottom:3px solid var(--pri);background:#f1f5ff;margin:0 6px;padding:2px 4px}
 .fillq input.good{background:#e9f7f0;border-color:var(--ok)}.fillq input.bad{background:#fdeceb;border-color:var(--no)}
-.mrow{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#f8f9fc;border:1.5px solid var(--line);border-radius:14px;padding:14px 18px;margin:10px 0;font-size:clamp(18px,2.6vw,22px)}
-.mrow select{font-weight:600;font-size:clamp(17px,2.4vw,21px);width:min(48%,420px);padding:12px;border:2px solid var(--pri);border-radius:12px;background:#fff}
+.mrow{display:flex;align-items:flex-start;gap:20px;background:#f8f9fc;border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0;font-size:clamp(18px,2.6vw,22px);line-height:1.45}
+.mrow .tx{flex:1 1 50%}.mr{flex:1 1 50%;min-width:0}
+.mrow select{width:100%;box-sizing:border-box;font-weight:600;font-size:clamp(17px,2.4vw,21px);padding:12px;border:2px solid var(--pri);border-radius:12px;background:#fff}
+.mrow select.good{border-color:var(--ok);background:#e9f7f0}.mrow select.bad{border-color:var(--no);background:#fdeceb}
+.ans2{margin-top:8px;color:#16794f;font-weight:600;font-size:18px}
 .ans{color:#16794f;font-weight:600;font-size:17px;margin-left:8px}
 .row{display:flex;align-items:center;gap:12px;background:#f8f9fc;border:1.5px solid var(--line);border-radius:14px;padding:12px 16px;margin:10px 0}
 .lf{flex:1}.slot{flex:1;min-height:46px;border:2px dashed #9aa4b8;border-radius:10px;padding:4px 8px}
@@ -38,7 +41,7 @@ input,select{font:inherit}
 .ft{display:flex;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid #eceff5}
 .go{font-family:inherit;font-weight:700;font-size:22px;background:var(--pri);color:#fff;border:0;border-radius:12px;padding:14px 28px;cursor:pointer;box-shadow:0 3px 0 #1c4fb8}
 .end{text-align:center}.big{font-size:64px}.err{color:#b42318}.okc{color:#16794f;font-weight:600}
-@media(max-width:620px){.card{padding:18px}.mrow{flex-direction:column;align-items:stretch}.mrow select{width:100%}.ic{font-size:26px}}
+@media(max-width:700px){.card{padding:18px}.mrow{flex-direction:column;align-items:stretch;gap:10px}.mrow .tx,.mr{flex:none}.ic{font-size:26px}}
 </style></head><body><main id="app"></main>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -69,7 +72,7 @@ function show(){
     b=`<div class="q">${esc(q.text)}</div>`;
     if(q.type==='single'||q.type==='multi')b+=(q.type==='multi'?'<p class="hint">Chọn nhiều đáp án</p>':'')+`<div class="opts">${q.options.map((o,k)=>`<button class="opt" data-k="${k}"><span class="mkr${q.type==='multi'?' sq':''}"></span><span class="tx">${esc(o)}</span><span class="rs"></span></button>`).join('')}</div>`;
     else if(q.type==='match'){const vs=[...new Set(q.pairs.map(x=>x[1]))].sort();
-      b+=`<div>${q.pairs.map((p,k)=>`<div class="mrow"><span class="tx">${esc(p[0])}</span><select data-k="${k}"><option value="">-- Lựa chọn đáp án --</option>${vs.map(v=>`<option>${esc(v)}</option>`).join('')}</select></div>`).join('')}</div>`}
+      b+=`<div>${q.pairs.map((p,k)=>`<div class="mrow"><span class="tx">${esc(p[0])}</span><div class="mr"><select data-k="${k}"><option value="">-- Lựa chọn đáp án --</option>${vs.map(v=>`<option>${esc(v)}</option>`).join('')}</select></div></div>`).join('')}</div>`}
     else b+='<p class="hint">Chạm vào chữ rồi chạm vào ô, hoặc kéo thả</p><div class="dq"></div>';
   }
   app.innerHTML=`${topbar(i/Q.length)}<div class="card">${b}<div id="fb"></div><div class="ft"><button class="go" id="ok">Kiểm Tra ✓</button></div></div>`;
@@ -138,7 +141,7 @@ function mark(q,a){
   });
   else if(q.type==='match')document.querySelectorAll('.mrow').forEach((r,k)=>{
     const g=a[k]===q.pairs[k][1],s=r.querySelector('select');
-    s.disabled=true;r.classList.add(g?'good':'bad');if(!g)s.insertAdjacentHTML('afterend',`<small class="ans">✓ ${esc(q.pairs[k][1])}</small>`);
+    s.disabled=true;s.classList.add(g?'good':'bad');if(!g)r.querySelector('.mr').insertAdjacentHTML('beforeend',`<div class="ans2">✓ ${esc(q.pairs[k][1])}</div>`);
   });
   else document.querySelectorAll('.slot').forEach(s=>{
     const k=+s.dataset.k,g=a[k]===q.pairs[k][1];
