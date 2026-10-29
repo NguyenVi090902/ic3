@@ -42,10 +42,9 @@ function render(){
 
   const s=D.support;
   if(s){
-    const vu=safeUrl(s.videoUrl), cu=safeUrl(s.cardUrl);
+    const vu=safeUrl(s.videoUrl);
     h+=`<section class="prog"><div class="sec-head"><h2><span class="sico">${esc(s.icon)}</span>${esc(s.title)}</h2></div>
     <div class="support">
-      <a class="k12" ${cu?`href="${esc(cu)}" target="_blank" rel="noopener"`:''}><span class="ico">${esc(s.cardIcon)}</span><b>${esc(s.cardName)}</b>${cu?'<span class="go">Bấm để mở <i>→</i></span>':''}</a>
       <div class="guide"><h3>📝 ${esc(s.guideTitle)}</h3>
         <ol>${(s.steps||[]).map(x=>`<li><span>${md(x)}</span></li>`).join('')}</ol>
         ${s.password?`<div class="pw">🔑 ${esc(s.passwordLabel)} <code id="pw">${esc(s.password)}</code><button class="copy" id="cp">Sao chép</button></div>`:''}

@@ -101,7 +101,7 @@ main.wrap{padding:26px 20px 40px}
 .rcard.off .tag{background:#e3e0d6}
 
 /* ---------- Hỗ trợ học tập ---------- */
-.support{display:grid;grid-template-columns:minmax(230px,1fr) 2.2fr;gap:22px}
+.support{display:grid;grid-template-columns:1fr;gap:22px}
 .k12{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:230px;padding:24px;text-align:center;text-decoration:none;background:#4da3ff;border:3px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
 a.k12[href]:hover{transform:translateY(-6px);box-shadow:0 11px 0 var(--ink)}
 .k12 .ico{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:#fff;border:3px solid var(--line);font-size:44px}
