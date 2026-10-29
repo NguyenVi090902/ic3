@@ -1,66 +1,21 @@
 <!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Làm bài</title>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="quiz.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
-<style>
-:root{--ink:#1f2937;--mut:#6b7280;--pri:#2563eb;--line:#d9dee8;--ok:#22a06b;--no:#e0675c}
-body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:#f1f4fa;color:var(--ink);font-size:16px}
-main{max-width:1000px;margin:0 auto;padding:0 14px 40px}
-.top{display:flex;align-items:center;gap:14px;padding:16px 0}
-.cnt{font-weight:700;color:var(--pri);font-size:17px;white-space:nowrap}.ic{font-size:28px}
-.track{position:relative;flex:1;height:12px;border-radius:9px;background:repeating-linear-gradient(90deg,#d5dbe8 0 10px,transparent 10px 16px)}
-.track i{position:absolute;left:0;top:0;bottom:0;background:var(--ok);border-radius:9px;transition:width .4s}
-.track em{position:absolute;top:50%;font-style:normal;font-size:28px;transform:translate(-50%,-50%);transition:left .4s}
-.card{background:#fff;border-radius:20px;padding:22px 24px;box-shadow:0 2px 12px #1f293712;margin:8px 0}
-h1{font-size:23px;margin:0 0 8px}
-.q{font-size:clamp(17px,2.4vw,21px);font-weight:700;line-height:1.4;margin-bottom:16px}
-.hint{color:var(--mut);font-size:14px;margin:-6px 0 12px}
-input,select{font:inherit}
-.pick select{display:block;width:100%;max-width:380px;margin:0 0 10px;padding:9px 12px;border:2px solid var(--line);border-radius:10px;font-size:15px;background:#fff}.pick select:disabled{opacity:.55}
-.opts{display:grid;gap:12px}
-.opt{display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit;font-size:clamp(15px,2vw,17px);padding:11px 16px;background:#f8f9fc;border:2px solid var(--line);border-radius:14px;cursor:pointer;color:inherit}
-.opt:disabled{cursor:default}.tx{flex:1}.rs{font-weight:700;font-size:20px}
-.mkr{flex:none;width:22px;height:22px;border:2.5px solid #9aa4b8;border-radius:50%;background:#fff}.mkr.sq{border-radius:7px}
-.opt.on{border-color:var(--pri);background:#eaf1ff}.opt.on .mkr{border-color:var(--pri);background:var(--pri);box-shadow:inset 0 0 0 5px #fff}
-.qimg{display:block;max-width:100%;max-height:300px;margin:0 auto 16px;border-radius:12px}
-.opts.imgs{grid-template-columns:repeat(4,1fr)}
-.opt.pic{position:relative;flex-direction:column;justify-content:center;gap:8px;padding:14px 10px 12px;text-align:center}
-.opt.pic img{width:100%;height:130px;object-fit:contain;background:#fff;border-radius:8px}
-.opt.pic .mkr{position:absolute;top:10px;left:10px}.opt.pic .rs{position:absolute;top:6px;right:10px}
-.opt.pic .tx{flex:none;font-size:.9em}
-.opt.right,.slot.good{border-color:var(--ok);background:#e9f7f0}.opt.right .rs{color:#16794f}
-.opt.wrong,.slot.bad{border-color:var(--no);background:#fdeceb}.opt.wrong .rs{color:#b42318}
-.fillq input{width:9ch;text-align:center;font-size:inherit;font-weight:700;border:0;border-bottom:2px solid var(--pri);background:#f1f5ff;margin:0 6px;padding:2px 4px}
-.fillq input.good{background:#e9f7f0;border-color:var(--ok)}.fillq input.bad{background:#fdeceb;border-color:var(--no)}
-.mrow{display:flex;align-items:flex-start;gap:20px;background:#f8f9fc;border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0;font-size:clamp(15px,2vw,17px);line-height:1.45}
-.mrow .tx{flex:1 1 50%}.mr{flex:1 1 50%;min-width:0}
-.mrow select{width:100%;box-sizing:border-box;font-weight:600;font-size:clamp(14px,1.9vw,16px);padding:9px;border:2px solid var(--pri);border-radius:12px;background:#fff}
-.mrow select.good{border-color:var(--ok);background:#e9f7f0}.mrow select.bad{border-color:var(--no);background:#fdeceb}
-.ans2{margin-top:8px;color:#16794f;font-weight:600;font-size:14px}
-.ans{color:#16794f;font-weight:600;font-size:15px;margin-left:8px}
-.row{display:flex;align-items:center;gap:12px;background:#f8f9fc;border:1.5px solid var(--line);border-radius:14px;padding:12px 16px;margin:10px 0}
-.lf{flex:1}.slot{flex:1;min-height:46px;border:2px dashed #9aa4b8;border-radius:10px;padding:4px 8px}
-.chip{display:inline-block;background:#fff;border:2px solid var(--pri);color:var(--pri);border-radius:10px;padding:6px 12px;margin:4px;cursor:grab;user-select:none;font-weight:600;font-size:15px}
-.chip.sel{background:var(--pri);color:#fff}.bank{margin-top:10px;padding:8px;background:#eef1f8;border-radius:12px;min-height:30px}
-.fb{margin-top:18px;padding:12px 16px;border-radius:12px;font-size:15px}.fb p{margin:6px 0}
-.fb.good{background:#e9f7f0;color:#14573a}.fb.bad{background:#fdeceb;color:#8a1f15}
-.ft{display:flex;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid #eceff5}
-.go{font-family:inherit;font-weight:700;font-size:16px;background:var(--pri);color:#fff;border:0;border-radius:12px;padding:11px 24px;cursor:pointer;box-shadow:0 3px 0 #1c4fb8}
-.end{text-align:center;padding:26px 24px 30px}
-.rb{display:flex;align-items:center;justify-content:center;gap:12px;border-radius:18px;padding:16px 20px;font-weight:700;font-size:clamp(16px,2.4vw,19px);margin:20px 0 0;border:1.5px solid}
-.rb span{font-size:28px;line-height:1}
-.rb.bad{background:#fdeceb;border-color:#f6c5c0;color:#8a1f15}.rb.good{background:#e8f7ee;border-color:#bfe5cf;color:#14573a}
-.rl{color:var(--pri);font-weight:700;letter-spacing:.5px;text-transform:uppercase;font-size:14px;margin-top:6px}
-.rsc{font-weight:800;color:#1d4ed8;font-size:clamp(60px,14vw,84px);line-height:1.05;margin:8px 0 4px}.rsc small{font-size:.38em;color:#6b7280;font-weight:700}
-.rbadge{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:9px 26px;font-weight:800;font-size:18px;margin:6px 0 20px}
-.rbadge.bad{background:#fdeceb;color:#8a1f15}.rbadge.good{background:#e8f7ee;color:#14573a}
-.rinfo{font-size:16px;margin:6px 0}.err{color:#b42318}.okc{color:#16794f;font-weight:600}
-@media(max-width:700px){.opts.imgs{grid-template-columns:repeat(2,1fr)}.card{padding:18px}.mrow{flex-direction:column;align-items:stretch;gap:10px}.mrow .tx,.mr{flex:none}.ic{font-size:26px}}
-</style></head><body><main id="app"></main>
+<script src="data.js"></script>
+</head><body>
+<header class="topbar" id="tb"><div class="wrap"><a class="brand" href="index.html"><span id="siteIcon"></span><span id="siteTitle"></span></a><div class="who" id="who" hidden></div></div></header>
+<main class="wrap" id="app"><div class="card">Đang tải…</div></main>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sb=supabase.createClient(SB.url,SB.key),qid=new URLSearchParams(location.search).get('q'),app=$('#app');
-let SC,quiz,cls,stu,Q,i,right,A,locked,fin,P,sel,pts,t0;
+let SC,quiz,cls,stu,Q,i,right,A,locked,fin,P,sel,pts,t0,who,CL=[],STU=[];
+const pk={school:'',cid:'',cname:'',sid:'',sname:''};
+// Tên + biểu tượng trang (lấy từ data.js, giống trang chủ)
+{const D=window.SITE_DATA||{};$('#siteIcon').textContent=D.siteIcon||'';$('#siteTitle').textContent=D.siteTitle||'Trang chủ'}
 const shuf=a=>{a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
 // Xáo trộn thứ tự câu hỏi + đáp án (chỉ số đáp án đúng được đổi theo)
 function prep(qs){return shuf(qs.map(q=>{
@@ -75,35 +30,91 @@ const O=o=>typeof o==='string'?{text:o}:(o||{});
 const img=u=>/^(https?:\/\/|images\/|data:image\/)/i.test(u||'')?esc(u):'';
 const lab=(o,k)=>{o=O(o);return o.text||o.alt||'Hình '+(k+1)};
 
-let CL=[];
+
+// ---------- Màn hình chọn trường / lớp / tên ----------
+const NAT=(a,b)=>String(a).localeCompare(String(b),'vi',{numeric:true});
+const nrm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').toLowerCase();
+const clsLabel=c=>/^lớp/i.test(c)?c:'Lớp '+c;
+const chips=(rows,cur)=>rows.map(r=>`<button type="button" class="pchip${r[0]===cur?' on':''}" data-v="${esc(r[0])}">${esc(r[1])}</button>`).join('');
+
+function sync(){
+  $('#s1').classList.toggle('done',!!pk.school);
+  $('#s2').classList.toggle('locked',!pk.school);$('#s2').classList.toggle('done',!!pk.cid);
+  $('#s3').classList.toggle('locked',!pk.cid);$('#s3').classList.toggle('done',!!pk.sid);
+  const ok=!!(pk.school&&pk.cid&&pk.sid);
+  $('#start').disabled=!ok;
+  $('#sh').textContent=ok?'':'Chọn đủ 3 bước để bắt đầu nhé';
+}
+function drawCls(){
+  const rows=CL.filter(c=>c.school===pk.school).sort((a,b)=>NAT(a.name,b.name)).map(c=>[c.id,c.name]);
+  $('#clList').innerHTML=!pk.school?'<span class="ph">Hãy chọn trường trước nhé</span>'
+    :rows.length?chips(rows,pk.cid):'<span class="ph">Trường này chưa có lớp nào.</span>';
+}
+function drawNames(){
+  const k=nrm($('#sq').value.trim());
+  const rows=STU.filter(s=>!k||nrm(s.name).includes(k)).map(s=>[s.id,s.name]);
+  $('#stList').innerHTML=!pk.cid?'<span class="ph">Hãy chọn lớp trước nhé</span>'
+    :rows.length?chips(rows,pk.sid):`<span class="ph">${STU.length?'Không tìm thấy tên này.':'Lớp này chưa có học sinh.'}</span>`;
+}
+function pickSchool(v){
+  Object.assign(pk,{school:v,cid:'',cname:'',sid:'',sname:''});STU=[];$('#sq').value='';
+  drawCls();drawNames();sync();
+}
+async function pickClass(id){
+  const c=CL.find(x=>x.id===id);if(!c)return;
+  Object.assign(pk,{cid:c.id,cname:c.name,sid:'',sname:''});STU=[];$('#sq').value='';
+  drawCls();$('#stList').innerHTML='<span class="ph">Đang tải danh sách…</span>';sync();
+  const {data}=await sb.rpc('list_students',{p_class:id});
+  if(pk.cid!==id)return;            // em đã đổi lớp trong lúc đang tải
+  STU=data||[];drawNames();
+}
+function showWho(){
+  const ini=(who.name.trim().split(/\s+/).pop()||'?').charAt(0).toUpperCase();
+  const w=$('#who');
+  w.innerHTML=`<span class="av">${esc(ini)}</span><span class="wt"><b>${esc(who.name)}</b><small>${esc(clsLabel(who.cls))}, ${esc(who.school)}</small></span>`;
+  w.hidden=false;$('#tb').classList.add('has-who');
+}
+function begin(){Q=prep(quiz.questions);i=0;right=0;pts=0;t0=Date.now();A=[];fin=false;show()}
+
 (async function(){
   const {data}=await sb.from('quizzes').select('*').eq('id',qid||'').maybeSingle();
-  if(!data){app.innerHTML='<div class="card">Không tìm thấy bài ôn.</div>';return}
-  quiz=data;
+  if(!data){app.innerHTML='<div class="card"><h1>Ôi, không tìm thấy bài ôn 😢</h1><p>Em hãy kiểm tra lại đường link hoặc nhờ thầy cô gửi lại nhé.</p><a class="go alt" href="index.html">← Về trang chủ</a></div>';return}
+  quiz=data;document.title=quiz.title||'Làm bài';
   const {data:cl}=await sb.rpc('list_classes');CL=cl||[];
-  const schools=[...new Set(CL.map(c=>c.school))];
-  app.innerHTML=`<div class="card" style="margin-top:20px"><h1>${esc(quiz.title)}</h1><p style="font-size:15px;margin:0 0 12px">Em hãy chọn trường, lớp và tên của mình:</p>
-    <div class="pick"><select id="sc"><option value="">-- Chọn trường --</option>${schools.map(x=>`<option>${esc(x)}</option>`).join('')}</select>
-    <select id="cl" disabled><option value="">-- Chọn lớp --</option></select>
-    <select id="st" disabled><option value="">-- Chọn tên của em --</option></select></div>
-    <button class="go" id="start">Bắt đầu</button></div>`;
-  const fill=(el,ph,rows)=>{el.innerHTML=`<option value="">${ph}</option>`+rows.map(r=>`<option value="${esc(r[0])}">${esc(r[1])}</option>`).join('');el.disabled=!rows.length};
-  $('#sc').onchange=()=>{fill($('#cl'),'-- Chọn lớp --',CL.filter(c=>c.school===$('#sc').value).map(c=>[c.id,c.name]));fill($('#st'),'-- Chọn tên của em --',[])};
-  $('#cl').onchange=async()=>{
-    const v=$('#cl').value;if(!v)return fill($('#st'),'-- Chọn tên của em --',[]);
-    fill($('#st'),'Đang tải…',[]);
-    const {data:s}=await sb.rpc('list_students',{p_class:v});
-    fill($('#st'),'-- Chọn tên của em --',(s||[]).map(x=>[x.id,x.name]));
+  const schools=[...new Set(CL.map(c=>c.school))].sort(NAT);
+  app.innerHTML=`<section class="hero"><h1>Chào em! <mark>Sẵn sàng</mark> chưa? 👋</h1><p>Chọn trường, lớp và tên của em để bắt đầu nhé.</p><span class="qbadge">📝 ${esc(quiz.title)}</span></section>
+  <div class="card pickcard">
+    <div class="step" id="s1"><div class="shead"><span class="sn">1</span><b>Em học trường nào?</b></div>
+      <select class="big" id="sc"><option value="">-- Chọn trường --</option>${schools.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}</select></div>
+    <div class="step locked" id="s2"><div class="shead"><span class="sn">2</span><b>Em học lớp nào?</b></div>
+      <div class="chips" id="clList"></div></div>
+    <div class="step locked" id="s3"><div class="shead"><span class="sn">3</span><b>Tên của em là gì?</b></div>
+      <input class="srch" id="sq" type="search" autocomplete="off" placeholder="🔍 Gõ tên để tìm nhanh…">
+      <div class="chips names" id="stList"></div></div>
+    <div class="startrow"><button class="go big" id="start" disabled>Bắt đầu làm bài ▶</button><span class="sh" id="sh"></span></div>
+  </div>`;
+  drawCls();drawNames();sync();
+
+  $('#sc').onchange=()=>pickSchool($('#sc').value);
+  $('#clList').onclick=e=>{const b=e.target.closest('.pchip');if(b)pickClass(b.dataset.v)};
+  $('#stList').onclick=e=>{
+    const b=e.target.closest('.pchip');if(!b)return;
+    const s=STU.find(x=>String(x.id)===b.dataset.v);if(!s)return;
+    pk.sid=s.id;pk.sname=s.name;drawNames();sync();
   };
+  $('#sq').oninput=drawNames;
   $('#start').onclick=()=>{
-    if(!$('#sc').value||!$('#cl').value||!$('#st').value)return alert('Em hãy chọn đủ trường, lớp và tên nhé');
-    try{localStorage.setItem('sel',JSON.stringify({school:$('#sc').value,cls:$('#cl').value}))}catch{}
-    cls={id:$('#cl').value};stu=$('#st').value;Q=prep(quiz.questions);i=0;right=0;pts=0;t0=Date.now();A=[];fin=false;show();
+    if(!(pk.school&&pk.cid&&pk.sid))return;
+    try{localStorage.setItem('sel',JSON.stringify({school:pk.school,cls:pk.cid}))}catch{}
+    cls={id:pk.cid};stu=pk.sid;who={name:pk.sname,cls:pk.cname,school:pk.school};
+    showWho();begin();
   };
-  let last={};try{last=JSON.parse(localStorage.getItem('sel')||'{}')}catch{}   // nhớ trường + lớp lần trước (không nhớ tên)
+
+  // nhớ trường + lớp lần trước (không nhớ tên)
+  let last={};try{last=JSON.parse(localStorage.getItem('sel')||'{}')}catch{}
   if(last.school&&schools.includes(last.school)){
-    $('#sc').value=last.school;$('#sc').onchange();
-    if(CL.some(c=>c.id===last.cls)){$('#cl').value=last.cls;await $('#cl').onchange()}
+    $('#sc').value=last.school;pickSchool(last.school);
+    if(CL.some(c=>c.id===last.cls))await pickClass(last.cls);
   }
 })();
 
@@ -207,11 +218,12 @@ function finish(){
   SC=sc;
   app.innerHTML=`<div class="rb ${T.c}"><span>${T.ic}</span>${T.msg}</div>
   <div class="card end" style="margin-top:14px"><div class="rl">Kết quả bài làm</div>
+  <p class="rwho">👤 <b>${esc(who.name)}</b> · ${esc(clsLabel(who.cls))}, ${esc(who.school)}</p>
   <div class="rsc">${sc}<small>/1000</small></div>
   <div class="rbadge ${T.c}"><span>${T.bi}</span>${T.lb.toUpperCase()}</div>
   <p class="rinfo">Bạn trả lời đúng <b>${right}/${Q.length}</b> câu hỏi.</p>
   <p class="rinfo">⏱ Tổng thời gian làm bài: <b>${tm}</b></p>
-  <p id="sv" style="font-size:14px;margin:8px 0 14px">Đang lưu điểm…</p><button class="go" onclick="location.reload()">Làm lại</button></div>`;
+  <p id="sv" style="font-size:14px;margin:8px 0 14px">Đang lưu điểm…</p><div class="rbtns"><button class="go" onclick="begin()">↻ Làm lại</button><button class="go alt" onclick="location.reload()">Đổi học sinh</button></div></div>`;
   save();
 }
 async function save(){
