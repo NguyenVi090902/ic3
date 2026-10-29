@@ -4,49 +4,49 @@
 <script src="config.js"></script>
 <style>
 :root{--ink:#1f2937;--mut:#6b7280;--pri:#2563eb;--line:#d9dee8;--ok:#22a06b;--no:#e0675c}
-body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:#f1f4fa;color:var(--ink);font-size:18px}
+body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:#f1f4fa;color:var(--ink);font-size:16px}
 main{max-width:1000px;margin:0 auto;padding:0 14px 40px}
 .top{display:flex;align-items:center;gap:14px;padding:16px 0}
-.cnt{font-weight:700;color:var(--pri);font-size:20px;white-space:nowrap}.ic{font-size:34px}
+.cnt{font-weight:700;color:var(--pri);font-size:17px;white-space:nowrap}.ic{font-size:28px}
 .track{position:relative;flex:1;height:12px;border-radius:9px;background:repeating-linear-gradient(90deg,#d5dbe8 0 10px,transparent 10px 16px)}
 .track i{position:absolute;left:0;top:0;bottom:0;background:var(--ok);border-radius:9px;transition:width .4s}
 .track em{position:absolute;top:50%;font-style:normal;font-size:28px;transform:translate(-50%,-50%);transition:left .4s}
-.card{background:#fff;border-radius:20px;padding:26px 28px;box-shadow:0 2px 12px #1f293712;margin:8px 0}
-h1{font-size:28px;margin:0 0 10px}
-.q{font-size:clamp(20px,3vw,26px);font-weight:700;line-height:1.4;margin-bottom:18px}
-.hint{color:var(--mut);margin:-8px 0 14px}
+.card{background:#fff;border-radius:20px;padding:22px 24px;box-shadow:0 2px 12px #1f293712;margin:8px 0}
+h1{font-size:23px;margin:0 0 8px}
+.q{font-size:clamp(17px,2.4vw,21px);font-weight:700;line-height:1.4;margin-bottom:16px}
+.hint{color:var(--mut);font-size:14px;margin:-6px 0 12px}
 input,select{font:inherit}
-.pick select{display:block;width:100%;max-width:440px;margin:0 0 12px;padding:12px 14px;border:2px solid var(--line);border-radius:12px;font-size:18px;background:#fff}.pick select:disabled{opacity:.55}
+.pick select{display:block;width:100%;max-width:380px;margin:0 0 10px;padding:9px 12px;border:2px solid var(--line);border-radius:10px;font-size:15px;background:#fff}.pick select:disabled{opacity:.55}
 .opts{display:grid;gap:12px}
-.opt{display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit;font-size:clamp(17px,2.5vw,21px);padding:14px 18px;background:#f8f9fc;border:2px solid var(--line);border-radius:14px;cursor:pointer;color:inherit}
-.opt:disabled{cursor:default}.tx{flex:1}.rs{font-weight:700;font-size:24px}
-.mkr{flex:none;width:26px;height:26px;border:2.5px solid #9aa4b8;border-radius:50%;background:#fff}.mkr.sq{border-radius:7px}
+.opt{display:flex;align-items:center;gap:14px;text-align:left;font-family:inherit;font-size:clamp(15px,2vw,17px);padding:11px 16px;background:#f8f9fc;border:2px solid var(--line);border-radius:14px;cursor:pointer;color:inherit}
+.opt:disabled{cursor:default}.tx{flex:1}.rs{font-weight:700;font-size:20px}
+.mkr{flex:none;width:22px;height:22px;border:2.5px solid #9aa4b8;border-radius:50%;background:#fff}.mkr.sq{border-radius:7px}
 .opt.on{border-color:var(--pri);background:#eaf1ff}.opt.on .mkr{border-color:var(--pri);background:var(--pri);box-shadow:inset 0 0 0 5px #fff}
 .qimg{display:block;max-width:100%;max-height:300px;margin:0 auto 16px;border-radius:12px}
 .opts.imgs{grid-template-columns:repeat(4,1fr)}
 .opt.pic{position:relative;flex-direction:column;justify-content:center;gap:8px;padding:14px 10px 12px;text-align:center}
-.opt.pic img{width:100%;height:150px;object-fit:contain;background:#fff;border-radius:8px}
+.opt.pic img{width:100%;height:130px;object-fit:contain;background:#fff;border-radius:8px}
 .opt.pic .mkr{position:absolute;top:10px;left:10px}.opt.pic .rs{position:absolute;top:6px;right:10px}
 .opt.pic .tx{flex:none;font-size:.9em}
 .opt.right,.slot.good{border-color:var(--ok);background:#e9f7f0}.opt.right .rs{color:#16794f}
 .opt.wrong,.slot.bad{border-color:var(--no);background:#fdeceb}.opt.wrong .rs{color:#b42318}
-.fillq input{width:9ch;text-align:center;font-size:inherit;font-weight:700;border:0;border-bottom:3px solid var(--pri);background:#f1f5ff;margin:0 6px;padding:2px 4px}
+.fillq input{width:9ch;text-align:center;font-size:inherit;font-weight:700;border:0;border-bottom:2px solid var(--pri);background:#f1f5ff;margin:0 6px;padding:2px 4px}
 .fillq input.good{background:#e9f7f0;border-color:var(--ok)}.fillq input.bad{background:#fdeceb;border-color:var(--no)}
-.mrow{display:flex;align-items:flex-start;gap:20px;background:#f8f9fc;border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0;font-size:clamp(16px,2.3vw,19px);line-height:1.45}
+.mrow{display:flex;align-items:flex-start;gap:20px;background:#f8f9fc;border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0;font-size:clamp(15px,2vw,17px);line-height:1.45}
 .mrow .tx{flex:1 1 50%}.mr{flex:1 1 50%;min-width:0}
-.mrow select{width:100%;box-sizing:border-box;font-weight:600;font-size:clamp(15px,2.1vw,18px);padding:11px;border:2px solid var(--pri);border-radius:12px;background:#fff}
+.mrow select{width:100%;box-sizing:border-box;font-weight:600;font-size:clamp(14px,1.9vw,16px);padding:9px;border:2px solid var(--pri);border-radius:12px;background:#fff}
 .mrow select.good{border-color:var(--ok);background:#e9f7f0}.mrow select.bad{border-color:var(--no);background:#fdeceb}
-.ans2{margin-top:8px;color:#16794f;font-weight:600;font-size:16px}
-.ans{color:#16794f;font-weight:600;font-size:17px;margin-left:8px}
+.ans2{margin-top:8px;color:#16794f;font-weight:600;font-size:14px}
+.ans{color:#16794f;font-weight:600;font-size:15px;margin-left:8px}
 .row{display:flex;align-items:center;gap:12px;background:#f8f9fc;border:1.5px solid var(--line);border-radius:14px;padding:12px 16px;margin:10px 0}
 .lf{flex:1}.slot{flex:1;min-height:46px;border:2px dashed #9aa4b8;border-radius:10px;padding:4px 8px}
-.chip{display:inline-block;background:#fff;border:2px solid var(--pri);color:var(--pri);border-radius:10px;padding:8px 14px;margin:4px;cursor:grab;user-select:none;font-weight:600}
+.chip{display:inline-block;background:#fff;border:2px solid var(--pri);color:var(--pri);border-radius:10px;padding:6px 12px;margin:4px;cursor:grab;user-select:none;font-weight:600;font-size:15px}
 .chip.sel{background:var(--pri);color:#fff}.bank{margin-top:10px;padding:8px;background:#eef1f8;border-radius:12px;min-height:30px}
-.fb{margin-top:18px;padding:14px 18px;border-radius:12px;font-size:18px}.fb p{margin:6px 0}
+.fb{margin-top:18px;padding:12px 16px;border-radius:12px;font-size:15px}.fb p{margin:6px 0}
 .fb.good{background:#e9f7f0;color:#14573a}.fb.bad{background:#fdeceb;color:#8a1f15}
 .ft{display:flex;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid #eceff5}
-.go{font-family:inherit;font-weight:700;font-size:19px;background:var(--pri);color:#fff;border:0;border-radius:12px;padding:14px 28px;cursor:pointer;box-shadow:0 3px 0 #1c4fb8}
-.end{text-align:center}.big{font-size:64px}.err{color:#b42318}.okc{color:#16794f;font-weight:600}
+.go{font-family:inherit;font-weight:700;font-size:16px;background:var(--pri);color:#fff;border:0;border-radius:12px;padding:11px 24px;cursor:pointer;box-shadow:0 3px 0 #1c4fb8}
+.end{text-align:center}.big{font-size:52px}.err{color:#b42318}.okc{color:#16794f;font-weight:600}
 @media(max-width:700px){.opts.imgs{grid-template-columns:repeat(2,1fr)}.card{padding:18px}.mrow{flex-direction:column;align-items:stretch;gap:10px}.mrow .tx,.mr{flex:none}.ic{font-size:26px}}
 </style></head><body><main id="app"></main>
 <script>
@@ -65,7 +65,7 @@ let CL=[];
   quiz=data;
   const {data:cl}=await sb.rpc('list_classes');CL=cl||[];
   const schools=[...new Set(CL.map(c=>c.school))];
-  app.innerHTML=`<div class="card" style="margin-top:20px"><h1>${esc(quiz.title)}</h1><p>Em hãy chọn trường, lớp và tên của mình:</p>
+  app.innerHTML=`<div class="card" style="margin-top:20px"><h1>${esc(quiz.title)}</h1><p style="font-size:15px;margin:0 0 12px">Em hãy chọn trường, lớp và tên của mình:</p>
     <div class="pick"><select id="sc"><option value="">-- Chọn trường --</option>${schools.map(x=>`<option>${esc(x)}</option>`).join('')}</select>
     <select id="cl" disabled><option value="">-- Chọn lớp --</option></select>
     <select id="st" disabled><option value="">-- Chọn tên của em --</option></select></div>
