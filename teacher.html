@@ -77,8 +77,9 @@ async function vQz(){
     const id=$('#qi').value.trim(),title=$('#qt').value.trim();let qs;
     try{qs=JSON.parse($('#qj').value)}catch(e){return $('#m').textContent='JSON sai: '+e.message}
     if(!/^[\w-]+$/.test(id)||!title)return $('#m').textContent='Mã bài chỉ gồm chữ/số/gạch ngang; cần có tiêu đề';
-    const bad=!Array.isArray(qs)||!qs.length||qs.findIndex(q=>!TYPES.includes(q.type)||!q.text||(q.type==='drag'?!q.pairs:!q.answer));
-    if(bad!==false)return $('#m').textContent='Câu hỏi không hợp lệ'+(typeof bad==='number'?' (câu '+(bad+1)+')':'');
+    if(!Array.isArray(qs)||!qs.length)return $('#m').textContent='Cần một danh sách câu hỏi dạng [ ... ]';
+    const bi=qs.findIndex(q=>!TYPES.includes(q.type)||!q.text||(q.type==='drag'?!q.pairs:!q.answer));
+    if(bi>=0)return $('#m').textContent='Câu hỏi không hợp lệ (câu '+(bi+1)+')';
     const {error}=await sb.from('quizzes').upsert({id,title,questions:qs});error?$('#m').textContent=error.message:vQz();
   };
 }
