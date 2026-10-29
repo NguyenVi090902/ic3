@@ -46,13 +46,21 @@ input,select{font:inherit}
 .fb.good{background:#e9f7f0;color:#14573a}.fb.bad{background:#fdeceb;color:#8a1f15}
 .ft{display:flex;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid #eceff5}
 .go{font-family:inherit;font-weight:700;font-size:16px;background:var(--pri);color:#fff;border:0;border-radius:12px;padding:11px 24px;cursor:pointer;box-shadow:0 3px 0 #1c4fb8}
-.end{text-align:center}.big{font-size:52px}.err{color:#b42318}.okc{color:#16794f;font-weight:600}
+.end{text-align:center;padding:26px 24px 30px}
+.rb{display:flex;align-items:center;justify-content:center;gap:12px;border-radius:18px;padding:16px 20px;font-weight:700;font-size:clamp(16px,2.4vw,19px);margin:20px 0 0;border:1.5px solid}
+.rb span{font-size:28px;line-height:1}
+.rb.bad{background:#fdeceb;border-color:#f6c5c0;color:#8a1f15}.rb.good{background:#e8f7ee;border-color:#bfe5cf;color:#14573a}
+.rl{color:var(--pri);font-weight:700;letter-spacing:.5px;text-transform:uppercase;font-size:14px;margin-top:6px}
+.rsc{font-weight:800;color:#1d4ed8;font-size:clamp(60px,14vw,84px);line-height:1.05;margin:8px 0 4px}.rsc small{font-size:.38em;color:#6b7280;font-weight:700}
+.rbadge{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:9px 26px;font-weight:800;font-size:18px;margin:6px 0 20px}
+.rbadge.bad{background:#fdeceb;color:#8a1f15}.rbadge.good{background:#e8f7ee;color:#14573a}
+.rinfo{font-size:16px;margin:6px 0}.err{color:#b42318}.okc{color:#16794f;font-weight:600}
 @media(max-width:700px){.opts.imgs{grid-template-columns:repeat(2,1fr)}.card{padding:18px}.mrow{flex-direction:column;align-items:stretch;gap:10px}.mrow .tx,.mr{flex:none}.ic{font-size:26px}}
 </style></head><body><main id="app"></main>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sb=supabase.createClient(SB.url,SB.key),qid=new URLSearchParams(location.search).get('q'),app=$('#app');
-let quiz,cls,stu,Q,i,right,A,locked,fin,P,sel;
+let SC,quiz,cls,stu,Q,i,right,A,locked,fin,P,sel,pts,t0;
 const isPair=q=>q.type==='drag'||q.type==='match';
 const O=o=>typeof o==='string'?{text:o}:(o||{});
 const img=u=>/^(https?:\/\/|images\/|data:image\/)/i.test(u||'')?esc(u):'';
@@ -81,7 +89,7 @@ let CL=[];
   $('#start').onclick=()=>{
     if(!$('#sc').value||!$('#cl').value||!$('#st').value)return alert('Em hãy chọn đủ trường, lớp và tên nhé');
     try{localStorage.setItem('sel',JSON.stringify({school:$('#sc').value,cls:$('#cl').value}))}catch{}
-    cls={id:$('#cl').value};stu=$('#st').value;Q=quiz.questions;i=0;right=0;A=[];fin=false;show();
+    cls={id:$('#cl').value};stu=$('#st').value;Q=quiz.questions;i=0;right=0;pts=0;t0=Date.now();A=[];fin=false;show();
   };
   let last={};try{last=JSON.parse(localStorage.getItem('sel')||'{}')}catch{}   // nhớ trường + lớp lần trước (không nhớ tên)
   if(last.school&&schools.includes(last.school)){
@@ -145,14 +153,20 @@ function ok(q,a){
   if(q.type==='fill')return q.answer.every((acc,k)=>[].concat(acc).some(s=>s.toLowerCase()===(a[k]||'').toLowerCase()));
   return q.pairs.every((p,k)=>a[k]===p[1]);
 }
+function frac(q,a){
+  if(q.type==='single')return ok(q,a)?1:0;
+  if(q.type==='multi'){const c=a.filter(x=>q.answer.includes(x)).length,w=a.length-c;return Math.max(0,(c-w)/q.answer.length)}
+  if(q.type==='fill')return q.answer.filter((acc,k)=>[].concat(acc).some(s=>s.toLowerCase()===(a[k]||'').toLowerCase())).length/q.answer.length;
+  return q.pairs.filter((p,k)=>a[k]===p[1]).length/q.pairs.length;
+}
 const shown=q=>q.type==='fill'?q.answer.map(a=>[].concat(a)[0]).join(' | '):isPair(q)?q.pairs.map(p=>p[0]+' → '+p[1]).join('; '):q.answer.map(x=>lab(q.options[x],x)).join(', ');
 
 function check(){
   if(locked)return;const q=Q[i],a=collect(q);
   if((q.type==='single'||q.type==='multi')&&!a.length)return alert('Em hãy chọn đáp án nhé');
-  const r=ok(q,a);locked=true;if(r)right++;A.push(a);mark(q,a);
+  const r=ok(q,a),f=frac(q,a);locked=true;if(r)right++;pts+=f;A.push(a);mark(q,a);
   const p=Math.min(Math.max((i+1)/Q.length*100,3),97);$('#pf').style.width=p+'%';$('#pb').style.left=p+'%';
-  $('#fb').innerHTML=`<div class="fb ${r?'good':'bad'}"><b>${r?'✔ Chính xác!':'✗ Chưa đúng'}</b>${r?'':`<p>Đáp án: ${esc(shown(q))}</p>`}${q.explain?`<p>${esc(q.explain)}</p>`:''}</div>`;
+  $('#fb').innerHTML=`<div class="fb ${r?'good':'bad'}"><b>${r?'✔ Chính xác!':f>0?'◐ Đúng một phần':'✗ Chưa đúng'}</b>${r?'':`<p>Đáp án: ${esc(shown(q))}</p>`}${q.explain?`<p>${esc(q.explain)}</p>`:''}</div>`;
   $('#ok').textContent=i+1<Q.length?'Câu tiếp ▶':'Xem kết quả ▶';$('#ok').onclick=next;
   $('#fb').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
@@ -176,12 +190,23 @@ function mark(q,a){
 }
 function next(){if(!locked)return;i++;i<Q.length?show():finish()}
 function finish(){
-  fin=true;const pc=right/Q.length;
-  app.innerHTML=`<div class="card end" style="margin-top:30px"><div class="big">${pc>=.8?'🎉':pc>=.5?'👍':'💪'}</div><h1>Em làm đúng ${right}/${Q.length} câu</h1><p id="sv">Đang lưu điểm…</p><button class="go" onclick="location.reload()">Làm lại</button></div>`;
+  fin=true;const sc=Math.round(pts/Q.length*1000),sec=Math.round((Date.now()-t0)/1000),
+    tm=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
+  const T=sc>=900?{ic:'🏆',bi:'🥇',lb:'Đạt xuất sắc',msg:'Xuất sắc! Bạn đã nắm vững kiến thức bài học!',c:'good'}
+         :sc>=800?{ic:'🌟',bi:'🥈',lb:'Đạt giỏi',msg:'Rất tốt! Bạn đã nắm chắc phần lớn kiến thức bài học!',c:'good'}
+         :{ic:'📚',bi:'🌱',lb:'Chưa đạt',msg:'Đừng bỏ cuộc! Hãy xem lại phần giải thích, ôn tập thêm và thử lại nhé!',c:'bad'};
+  SC=sc;
+  app.innerHTML=`<div class="rb ${T.c}"><span>${T.ic}</span>${T.msg}</div>
+  <div class="card end" style="margin-top:14px"><div class="rl">Kết quả bài làm</div>
+  <div class="rsc">${sc}<small>/1000</small></div>
+  <div class="rbadge ${T.c}"><span>${T.bi}</span>${T.lb.toUpperCase()}</div>
+  <p class="rinfo">Bạn trả lời đúng <b>${right}/${Q.length}</b> câu hỏi.</p>
+  <p class="rinfo">⏱ Tổng thời gian làm bài: <b>${tm}</b></p>
+  <p id="sv" style="font-size:14px;margin:8px 0 14px">Đang lưu điểm…</p><button class="go" onclick="location.reload()">Làm lại</button></div>`;
   save();
 }
 async function save(){
-  const {error}=await sb.rpc('submit_attempt',{p_class:cls.id,p_student:stu,p_quiz:qid,p_score:right,p_total:Q.length,p_answers:A});
+  const {error}=await sb.rpc('submit_attempt',{p_class:cls.id,p_student:stu,p_quiz:qid,p_score:SC,p_total:1000,p_answers:A});
   $('#sv').innerHTML=error?'<span class="err">Chưa lưu được điểm.</span> <button class="go" id="rt">Thử lại</button>':'<span class="okc">Đã lưu điểm ✓</span>';
   if(error)$('#rt').onclick=save;
 }
