@@ -10,7 +10,7 @@ textarea{width:100%;font-family:monospace;font-size:13px}
 button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:8px 16px;background:#2f6fed;color:#fff;cursor:pointer;margin:2px}
 button.g{background:#e9e3cf;color:#333}.tabs{display:flex;flex-wrap:wrap;gap:4px}
 table{border-collapse:collapse;width:100%;font-size:14px}td,th{border-bottom:1px solid #eee;padding:6px 8px;text-align:left}
-.bad{color:#b42318}.good{color:#1a7f37}code{background:#f3efe0;padding:2px 6px;border-radius:6px}
+button.dg{background:#d92d20}button.dg:disabled{background:#e9e3cf;color:#999;cursor:not-allowed}label.dt{font-size:14px;font-weight:600;white-space:nowrap}tr.rr{cursor:pointer}tr.rr:hover{background:#fffaf0}tr.sel{background:#fff1d0!important}input[type=checkbox]{width:18px;height:18px;margin:0;cursor:pointer}.bad{color:#b42318}.good{color:#1a7f37}code{background:#f3efe0;padding:2px 6px;border-radius:6px}
 </style></head><body><main id="app"></main>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -33,16 +33,54 @@ async function vRes(){
   const [{data:qz},{data:cl}]=await Promise.all([sb.from('quizzes').select('id,title'),sb.from('classes').select('id,school,name').order('school').order('name')]);
   $('#body').innerHTML=`<div class="c"><select id="fq"><option value="">Tất cả bài</option>${(qz||[]).map(q=>`<option value="${esc(q.id)}">${esc(q.title)}</option>`).join('')}</select>
     <select id="fc"><option value="">Tất cả lớp</option>${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.school)} - ${esc(c.name)}</option>`).join('')}</select>
-    <button id="ex">⬇ Xuất CSV</button><div style="overflow-x:auto"><table id="tb"></table></div></div>`;
-  const H=['Thời gian','Trường','Lớp','Học sinh','Bài','Điểm'];let rows=[];
-  const load=async()=>{
-    let q=sb.from('attempts').select('created_at,quiz_id,student_name,score,total,classes(school,name)').order('created_at',{ascending:false}).limit(1000);
-    if($('#fq').value)q=q.eq('quiz_id',$('#fq').value);if($('#fc').value)q=q.eq('class_id',$('#fc').value);
-    const {data}=await q;
-    rows=(data||[]).map(r=>[new Date(r.created_at).toLocaleString('vi-VN'),r.classes?.school||'',r.classes?.name||'',r.student_name,r.quiz_id,r.score+'/'+r.total]);
-    $('#tb').innerHTML='<tr>'+H.map(h=>`<th>${h}`).join('')+'</tr>'+rows.map(r=>'<tr>'+r.map(x=>`<td>${esc(x)}`).join('')+'</tr>').join('');
+    <label class="dt">Từ ngày <input type="date" id="fd1"></label>
+    <label class="dt">Đến ngày <input type="date" id="fd2"></label>
+    <button id="clr" class="g" title="Bỏ tất cả bộ lọc">✕ Xóa lọc</button>
+    <button id="ex">⬇ Xuất CSV</button>
+    <button id="del" class="dg" disabled>🗑 Xóa đã chọn (<span id="dn">0</span>)</button> <span id="rm" class="bad"></span>
+    <div style="overflow-x:auto"><table id="tb"></table></div></div>`;
+  const H=['Thời gian','Trường','Lớp','Học sinh','Bài','Điểm'];let rows=[],ids=[];const sel=new Set();
+  const upd=()=>{
+    $('#dn').textContent=sel.size;$('#del').disabled=!sel.size;
+    document.querySelectorAll('#tb .rk').forEach(c=>{c.checked=sel.has(c.value);c.closest('tr').classList.toggle('sel',c.checked)});
+    const a=$('#all');if(a){a.checked=ids.length>0&&sel.size===ids.length;a.indeterminate=sel.size>0&&sel.size<ids.length}
   };
-  $('#fq').onchange=$('#fc').onchange=load;$('#ex').onclick=()=>dl('ket-qua.csv',[H,...rows]);load();
+  const load=async()=>{
+    let q=sb.from('attempts').select('id,created_at,quiz_id,student_name,score,total,classes(school,name)').order('created_at',{ascending:false}).limit(1000);
+    if($('#fq').value)q=q.eq('quiz_id',$('#fq').value);if($('#fc').value)q=q.eq('class_id',$('#fc').value);
+    // lọc theo ngày theo giờ địa phương (từ 00:00 của "Từ ngày" đến hết ngày "Đến ngày")
+    if($('#fd1').value)q=q.gte('created_at',new Date($('#fd1').value+'T00:00:00').toISOString());
+    if($('#fd2').value){const e=new Date($('#fd2').value+'T00:00:00');e.setDate(e.getDate()+1);q=q.lt('created_at',e.toISOString())}
+    const {data}=await q;
+    ids=(data||[]).map(r=>r.id);sel.clear();
+    rows=(data||[]).map(r=>[new Date(r.created_at).toLocaleString('vi-VN'),r.classes?.school||'',r.classes?.name||'',r.student_name,r.quiz_id,r.score+'/'+r.total]);
+    $('#tb').innerHTML='<tr><th style="width:32px"><input type="checkbox" id="all" title="Chọn tất cả">'+H.map(h=>`<th>${h}`).join('')+'</tr>'+
+      rows.map((r,i)=>`<tr class="rr"><td><input type="checkbox" class="rk" value="${ids[i]}">`+r.map(x=>`<td>${esc(x)}`).join('')+'</tr>').join('');
+    upd();
+  };
+  // chọn từng dòng (bấm vào ô tick hoặc bất kỳ chỗ nào trên dòng)
+  $('#tb').addEventListener('click',e=>{
+    if(e.target.id==='all'){ids.forEach(i=>e.target.checked?sel.add(i):sel.delete(i));return upd()}
+    const tr=e.target.closest('tr.rr');if(!tr)return;
+    const c=tr.querySelector('.rk');
+    if(e.target!==c)c.checked=!c.checked;
+    c.checked?sel.add(c.value):sel.delete(c.value);upd();
+  });
+  $('#del').onclick=async()=>{
+    const list=[...sel];if(!list.length)return;
+    if(!confirm('Xóa '+list.length+' kết quả đã chọn? Không thể hoàn tác.'))return;
+    $('#del').disabled=true;$('#rm').textContent='Đang xóa…';let n=0;
+    for(let i=0;i<list.length;i+=100){
+      const {data,error}=await sb.from('attempts').delete().in('id',list.slice(i,i+100)).select('id');
+      if(error){$('#rm').textContent='Lỗi: '+error.message;upd();return}
+      n+=(data||[]).length;
+    }
+    await load();
+    $('#rm').textContent=n<list.length?'Chỉ xóa được '+n+'/'+list.length+' (kiểm tra quyền trong Supabase)':'';
+    if(n===list.length){$('#rm').className='good';$('#rm').textContent='Đã xóa '+n+' kết quả ✓';setTimeout(()=>{$('#rm').textContent='';$('#rm').className='bad'},3000)}
+  };
+  $('#fq').onchange=$('#fc').onchange=$('#fd1').onchange=$('#fd2').onchange=load;
+  $('#clr').onclick=()=>{$('#fq').value=$('#fc').value=$('#fd1').value=$('#fd2').value='';load()};$('#ex').onclick=()=>dl('ket-qua.csv',[H,...rows]);load();
 }
 
 async function vCls(){
@@ -65,14 +103,30 @@ async function vCls(){
   };
 }
 
+let qLv='';
 async function vQz(){
-  const {data}=await sb.from('quizzes').select('id,title,questions').order('created_at',{ascending:false}),Z=data||[];
-  $('#body').innerHTML=`<div class="c"><h3>Thêm / sửa bài ôn</h3><input id="qi" placeholder="Mã bài, vd: spark-lv2-bai1" size="28"> <input id="qt" placeholder="Tiêu đề bài" size="30">
+  const [{data},r1]=await Promise.all([sb.from('quizzes').select('id,title,questions').order('created_at',{ascending:false}),sb.from('quiz_notes').select('quiz_id,note,level')]);
+  let nt=r1.data;
+  if(r1.error){const r2=await sb.from('quiz_notes').select('quiz_id,note');nt=r2.data}   // chưa chạy SQL thêm cột level
+  const Z=data||[],N=Object.fromEntries((nt||[]).map(n=>[n.quiz_id,n.note||''])),L=Object.fromEntries((nt||[]).map(n=>[n.quiz_id,n.level||'']));
+  const lvs=[...new Set(Z.map(q=>L[q.id]).filter(Boolean))].sort((x,y)=>x.localeCompare(y,'vi',{numeric:true}));
+  const sug=[...new Set(['SPARK Level 1','SPARK Level 2','SPARK Level 3',...lvs])];
+  if(qLv&&qLv!=='__none'&&!lvs.includes(qLv))qLv='';
+  $('#body').innerHTML=`<div class="c"><h3>Thêm / sửa bài ôn</h3><input id="qi" placeholder="Mã bài, vd: spark-lv2-bai1" size="28"> <input id="qt" placeholder="Tiêu đề bài" size="30"> <input id="ql" list="lvl" placeholder="Level, vd: SPARK Level 2" size="24" autocomplete="off"><datalist id="lvl">${sug.map(x=>`<option value="${esc(x)}">`).join('')}</datalist><br>
+    <input id="qd" placeholder="Ghi chú cho giáo viên (học sinh không nhìn thấy)" style="width:100%">
     <textarea id="qj" rows="12" placeholder='Dán JSON câu hỏi (xem sample-questions.json)'></textarea><input type="file" id="qf" accept=".json"> <button id="sv">Lưu bài</button> <span id="m" class="bad"></span></div>
-    <div class="c"><table><tr><th>Bài<th>Số câu<th>Link dán vào admin (data.js)<th></tr>${Z.map((q,i)=>`<tr><td>${esc(q.title)}<td>${q.questions.length}<td><code>quiz.html?q=${esc(q.id)}</code><td><button class="g" data-ed="${i}">Sửa</button><button class="g" data-rm="${i}">Xóa</button></tr>`).join('')}</table></div>`;
+    <div class="c"><label class="dt">Lọc theo level: <select id="fl"><option value="">Tất cả level</option>${lvs.map(x=>`<option value="${esc(x)}"${x===qLv?' selected':''}>${esc(x)}</option>`).join('')}<option value="__none"${qLv==='__none'?' selected':''}>(Chưa phân level)</option></select></label> <span id="qc" style="color:#666;font-size:14px"></span>
+      <div style="overflow-x:auto"><table id="ql2"></table></div></div>`;
+  const draw=()=>{
+    const f=$('#fl').value;qLv=f;
+    const list=Z.map((q,i)=>[q,i]).filter(([q])=>!f||(f==='__none'?!L[q.id]:L[q.id]===f));
+    $('#qc').textContent=list.length+'/'+Z.length+' bài';
+    $('#ql2').innerHTML='<tr><th>Bài<th>Level<th>Ghi chú<th>Số câu<th>Link dán vào admin (data.js)<th></tr>'+(list.length?list.map(([q,i])=>`<tr><td>${esc(q.title)}<td>${esc(L[q.id]||'')}<td style="white-space:pre-wrap;color:#666">${esc(N[q.id]||'')}<td>${q.questions.length}<td><code>quiz.html?q=${esc(q.id)}</code><td><button class="g" data-ed="${i}">Sửa</button><button class="g" data-rm="${i}">Xóa</button></tr>`).join(''):'<tr><td colspan="6" style="color:#888">Không có bài nào.</tr>');
+    document.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{const q=Z[b.dataset.ed];$('#qi').value=q.id;$('#qt').value=q.title;$('#ql').value=L[q.id]||'';$('#qd').value=N[q.id]||'';$('#qj').value=JSON.stringify(q.questions,null,1);scrollTo(0,0)});
+    document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{if(confirm('Xóa bài này và toàn bộ điểm của bài?')){await sb.from('quizzes').delete().eq('id',Z[b.dataset.rm].id);vQz()}});
+  };
+  $('#fl').onchange=draw;draw();
   $('#qf').onchange=async e=>{$('#qj').value=await e.target.files[0].text()};
-  document.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{const q=Z[b.dataset.ed];$('#qi').value=q.id;$('#qt').value=q.title;$('#qj').value=JSON.stringify(q.questions,null,1);scrollTo(0,0)});
-  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{if(confirm('Xóa bài này và toàn bộ điểm của bài?')){await sb.from('quizzes').delete().eq('id',Z[b.dataset.rm].id);vQz()}});
   $('#sv').onclick=async()=>{
     const id=$('#qi').value.trim(),title=$('#qt').value.trim();let qs;
     try{qs=JSON.parse($('#qj').value)}catch(e){return $('#m').textContent='JSON sai: '+e.message}
@@ -80,7 +134,12 @@ async function vQz(){
     if(!Array.isArray(qs)||!qs.length)return $('#m').textContent='Cần một danh sách câu hỏi dạng [ ... ]';
     const bi=qs.findIndex(q=>!TYPES.includes(q.type)||!q.text||(q.type==='drag'||q.type==='match'?!q.pairs:!q.answer));
     if(bi>=0)return $('#m').textContent='Câu hỏi không hợp lệ (câu '+(bi+1)+')';
-    const {error}=await sb.from('quizzes').upsert({id,title,questions:qs});error?$('#m').textContent=error.message:vQz();
+    const {error}=await sb.from('quizzes').upsert({id,title,questions:qs});
+    if(error)return $('#m').textContent=error.message;
+    const note=$('#qd').value.trim(),level=$('#ql').value.trim();
+    const r=(note||level)?await sb.from('quiz_notes').upsert({quiz_id:id,note,level:level||null}):await sb.from('quiz_notes').delete().eq('quiz_id',id);
+    if(r.error)return $('#m').textContent='Đã lưu bài, nhưng chưa lưu được level/ghi chú: '+r.error.message+' (đã chạy SQL thêm cột level chưa?)';
+    vQz();
   };
 }
 </script></body></html>
