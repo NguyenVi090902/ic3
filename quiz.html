@@ -1,21 +1,34 @@
 <!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Làm bài</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://ldemozqloryuzuxrlzho.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="quiz.css?v=5">
+<link rel="stylesheet" href="quiz.css?v=6">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
 </head><body>
 <header class="topbar" id="tb"><div class="wrap"><a class="brand" href="index.html"><span id="siteIcon"></span><span id="siteTitle"></span></a><div class="who" id="who" hidden></div></div></header>
+<div class="wrap navrow"><a class="back" id="backLink" href="index.html">← Quay lại</a></div>
 <main class="wrap" id="app"><div class="card">Đang tải…</div></main>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sb=supabase.createClient(SB.url,SB.key),qid=new URLSearchParams(location.search).get('q'),app=$('#app');
 let SC,quiz,cls,stu,Q,i,right,A,locked,fin,P,sel,pts,t0,who,CL=[],STU=[],CS=null,RV=[],SS=null,RS=[],REC=null,HIST=null,REVM=false;
 const pk={school:'',cid:'',cname:'',sid:'',sname:''};
+let onPick=true; // true = đang ở màn chọn trường/lớp/tên
+let PRE=null; // danh sách học sinh của lớp đã nhớ, tải sẵn song song với bài + danh sách lớp
 // Tên + biểu tượng trang (lấy từ data.js, giống trang chủ)
 {const D=window.SITE_DATA||{};$('#siteIcon').textContent=D.siteIcon||'';$('#siteTitle').textContent=D.siteTitle||'Trang chủ'}
+// Nút Quay lại: về đúng trang danh sách bài của level (index.html truyền &b=nhóm/chương trình/level)
+$('#backLink').addEventListener('click',e=>{
+  if(onPick||!window.showPick)return;           // ở màn chọn tên: về trang danh sách bài như cũ
+  e.preventDefault();
+  if(Q&&fin===false&&!REVM&&!confirm('Em muốn thoát bài đang làm? Kết quả sẽ không được lưu.'))return;
+  window.showPick();                            // đang làm bài / xem kết quả: về màn chọn trường, lớp, tên
+});
+{const b=(new URLSearchParams(location.search).get('b')||'').replace(/[^\d\/]/g,'');$('#backLink').href='index.html#/'+b}
 const shuf=a=>{a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
 // Xáo trộn thứ tự câu hỏi + đáp án (chỉ số đáp án đúng được đổi theo)
 function prep(qs){return shuf(qs.map(q=>{
@@ -71,7 +84,8 @@ async function pickClass(id){
   const c=CL.find(x=>String(x.id)===String(id));if(!c)return;
   Object.assign(pk,{cid:c.id,cname:c.name,sid:'',sname:''});STU=[];
   drawCls();drawNames(true);sync();
-  const {data}=await sb.rpc('list_students',{p_class:id});
+  const pre=PRE&&String(PRE.id)===String(id)?PRE.p:null;PRE=null;
+  const {data}=await (pre||sb.rpc('list_students',{p_class:id}));
   if(pk.cid!==c.id)return;            // em đã đổi lớp trong lúc đang tải
   STU=data||[];drawNames();
 }
@@ -79,7 +93,7 @@ function showWho(){
   const ini=(who.name.trim().split(/\s+/).pop()||'?').charAt(0).toUpperCase();
   const w=$('#who');
   w.innerHTML=`<span class="av">${esc(ini)}</span><span class="wt"><b>${esc(who.name)}</b><small>${esc(clsLabel(who.cls))}, ${esc(who.school)}</small></span>`;
-  w.hidden=false;$('#tb').classList.add('has-who');
+  w.hidden=false;$('#tb').classList.add('has-who');onPick=false;
 }
 // ---------- Lịch sử làm bài (lưu trên máy của học sinh, theo bài + học sinh) ----------
 const hkey=sid=>'qh2|'+qid+'|'+sid;
@@ -124,10 +138,17 @@ function drawHist(){
 function begin(){if(fxStop)fxStop();Q=prep(quiz.questions);i=0;right=0;pts=0;t0=Date.now();A=[];RS=[];fin=false;show()}
 
 (async function(){
-  const {data}=await sb.from('quizzes').select('*').eq('id',qid||'').maybeSingle();
+  // Gửi cùng lúc: bài ôn, danh sách lớp, và học sinh của lớp đã nhớ (trước đây chạy nối tiếp nên chậm)
+  let l0={};try{l0=JSON.parse(localStorage.getItem('sel')||'{}')}catch{}
+  if(l0.cls)PRE={id:l0.cls,p:Promise.resolve(sb.rpc('list_students',{p_class:l0.cls})).catch(()=>({data:null}))};
+  const [{data},{data:cl}]=await Promise.all([sb.from('quizzes').select('*').eq('id',qid||'').maybeSingle(),sb.rpc('list_classes')]);
   if(!data){app.innerHTML='<div class="card"><h1>Ôi, không tìm thấy bài ôn 😢</h1><p>Em hãy kiểm tra lại đường link hoặc nhờ thầy cô gửi lại nhé.</p><a class="go alt" href="index.html">← Về trang chủ</a></div>';return}
   quiz=data;document.title=quiz.title||'Làm bài';
-  const {data:cl}=await sb.rpc('list_classes');CL=cl||[];
+  CL=cl||[];
+  async function showPick(){
+    if(fxStop)fxStop();
+    document.body.classList.remove('hasnav');$('#who').hidden=true;$('#tb').classList.remove('has-who');
+    Object.assign(pk,{school:'',cid:'',cname:'',sid:'',sname:''});STU=[];HIST=null;REVM=false;onPick=true;scrollTo(0,0);
   const schools=[...new Set(CL.map(c=>c.school))].sort(NAT);
   app.innerHTML=`<section class="hero"><h1>Chào em! <mark>Sẵn sàng</mark> chưa? 👋</h1><p>Chọn trường, lớp và tên của em để bắt đầu nhé.</p><span class="qbadge">📝 ${esc(quiz.title)}</span></section>
   <div class="card pickcard">
@@ -162,6 +183,9 @@ function begin(){if(fxStop)fxStop();Q=prep(quiz.questions);i=0;right=0;pts=0;t0=
     $('#sc').value=last.school;pickSchool(last.school);
     if(CL.some(c=>String(c.id)===String(last.cls)&&c.school===last.school))await pickClass(last.cls);
   }
+  }
+  window.showPick=showPick;
+  await showPick();
 })();
 
 const topbar=f=>{const p=Math.min(Math.max(f*100,3),97);return `<div class="top"><span class="cnt">Câu ${i+1}/${Q.length}</span><div class="track"><i id="pf" style="width:${p}%"></i></div></div>`};
@@ -423,7 +447,7 @@ function renderResult(rec,fresh){
   <p class="rinfo">🔁 Số lần làm bài: <b>${h.count}</b></p>
   ${fresh?'<p id="sv" style="font-size:14px;margin:8px 0 14px">Đang lưu điểm…</p>':`<p class="rinfo muted">🗓 Đây là bài làm lần ${rec.n} (${fmt(rec.at)})</p>`}
   ${rows?`<div class="hist"><div class="ht">📜 Lịch sử làm bài</div>${rows}${h.count>10?`<div class="hr more">… và ${h.count-10} lần trước đó</div>`:''}</div>`:''}
-  <div class="rbtns"><button class="go" id="rv1">👁 Xem lại bài làm</button><button class="go" onclick="begin()">↻ Làm lại</button><button class="go alt" onclick="location.reload()">Đổi học sinh</button></div></div>`;
+  <div class="rbtns"><button class="go" id="rv1">👁 Xem lại bài làm</button><button class="go" onclick="begin()">↻ Làm lại</button><button class="go alt" onclick="showPick()">Đổi học sinh</button></div></div>`;
   app.innerHTML=layout(main,nav(rec.res,rec.total,-1,true));
   $('#rv1').onclick=()=>{i=0;show(true)};
   scrollTo(0,0);

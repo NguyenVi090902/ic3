@@ -22,14 +22,14 @@ window.SITE_DATA = {
                     {
                       "nums": "1, 2",
                       "name": "Phần cứng máy tính",
-                      "lessonUrl": "",
+                      "lessonUrl": "flashcard.html?d=splv1_12",
                       "reviewUrl": "quiz.html?q=splv1_12"
                     },
                     {
                       "nums": "3",
                       "name": "Phần mềm và các loại phần mềm",
-                      "lessonUrl": "",
-                      "reviewUrl": ""
+                      "lessonUrl": "flashcard.html?d=splv1_3",
+                      "reviewUrl": "quiz.html?q=splv1_3"
                     },
                     {
                       "nums": "4",
