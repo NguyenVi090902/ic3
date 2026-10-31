@@ -9,14 +9,7 @@ window.DECK = {
   color: "green",
   cards: [
     { tag: "Phần cứng", img: "decks/img/hardware.png", front: "Phần cứng (Hardware) là gì?", back: "Là các **thiết bị** mà chúng ta có thể **cầm, nắm và nhìn thấy** được." },
-    { tag: "Phần cứng", img: "decks/img/speakers.png", front: "Speakers", back: "**Loa**" },
-    { tag: "Phần cứng", img: "decks/img/monitor.png", front: "Monitor", back: "**Màn hình**" },
-    { tag: "Phần cứng", img: "decks/img/headphone.png", front: "Headphone", back: "**Tai nghe**" },
-    { tag: "Phần cứng", img: "decks/img/printer.png", front: "Printer", back: "**Máy in**" },
-    { tag: "Phần cứng", img: "decks/img/microphone.png", front: "Microphone", back: "**Micro**" },
-    { tag: "Phần cứng", img: "decks/img/keyboard.png", front: "Keyboard", back: "**Bàn phím**" },
-    { tag: "Phần cứng", img: "decks/img/mouse.png", front: "Mouse", back: "**Chuột**" },
-    { tag: "Phần cứng", img: "decks/img/scanner.png", front: "Scanner", back: "**Máy quét**" },
+
 
     { tag: "Thiết bị ngoại vi", front: "Thiết bị ngoại vi là gì?", back: "Là các **thiết bị phần cứng** nằm **bên ngoài thùng máy (case)** hoặc thân chính của máy tính, được **kết nối với máy tính**." },
 
