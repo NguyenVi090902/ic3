@@ -13,12 +13,37 @@ window.SITE_DATA = {
               "name": "SPARK Level 1",
               "icon": "🌱",
               "color": "green",
-              "reviewTitle": "SPARK Level 1",
-              "reviewIcon": "📝",
-              "reviews": [
+              "reviewTitle": "IC3 SPARK GS6 - Level 1",
+              "docUrl": "",
+              "topics": [
                 {
-                  "name": "SPARK Level 1",
-                  "url": ""
+                  "title": "Chủ đề 1: Cơ bản về công nghệ",
+                  "lessons": [
+                    {
+                      "nums": "1, 2",
+                      "name": "Phần cứng máy tính",
+                      "lessonUrl": "",
+                      "reviewUrl": "quiz.html?q=splv1_1_2"
+                    },
+                    {
+                      "nums": "3",
+                      "name": "Phần mềm và các loại phần mềm",
+                      "lessonUrl": "",
+                      "reviewUrl": ""
+                    },
+                    {
+                      "nums": "4",
+                      "name": "Hệ điều hành và chương trình ứng dụng",
+                      "lessonUrl": "",
+                      "reviewUrl": ""
+                    },
+                    {
+                      "nums": "5, 6",
+                      "name": "Tập tin và thư mục",
+                      "lessonUrl": "",
+                      "reviewUrl": ""
+                    }
+                  ]
                 }
               ]
             },
@@ -27,11 +52,18 @@ window.SITE_DATA = {
               "icon": "🌿",
               "color": "teal",
               "reviewTitle": "SPARK Level 2",
-              "reviewIcon": "📝",
-              "reviews": [
+              "docUrl": "",
+              "topics": [
                 {
-                  "name": "Bài ôn 1",
-                  "url": "https://nguyenvi090902.github.io/ic3/quiz.html?q=splv2_123"
+                  "title": "",
+                  "lessons": [
+                    {
+                      "nums": "1",
+                      "name": "Bài ôn 1",
+                      "lessonUrl": "",
+                      "reviewUrl": "https://nguyenvi090902.github.io/ic3/quiz.html?q=splv2_123"
+                    }
+                  ]
                 }
               ]
             },
@@ -40,8 +72,8 @@ window.SITE_DATA = {
               "icon": "🌳",
               "color": "blue",
               "reviewTitle": "SPARK Level 3",
-              "reviewIcon": "📝",
-              "reviews": []
+              "docUrl": "",
+              "topics": []
             }
           ]
         }

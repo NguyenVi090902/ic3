@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="student.css">
+<link rel="stylesheet" href="student.css?v=2">
 </head>
 <body>
 <div class="topbar"><div class="wrap"><a href="#/"><span id="siteIcon"></span><span id="siteTitle"></span></a></div></div>
@@ -45,18 +45,18 @@ function render(){
   document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{cur=+b.dataset.g;render()});
 }
 
+// Dữ liệu cũ (reviews) vẫn đọc được: chuyển thành 1 chủ đề không tên
+const legacy=l=>(l.reviews&&l.reviews.length)?[{title:'',lessons:l.reviews.map((r,n)=>({nums:String(n+1),name:r.name,lessonUrl:'',reviewUrl:r.url}))}]:[];
+const btn=(u,cls,label)=>{u=safeUrl(u);return u?`<a class="lb ${cls}" href="${esc(u)}" target="_blank" rel="noopener">${label}</a>`:`<span class="lb off">${label}</span>`};
 function renderReview(gi,pi,li){
   const l=(((D.groups[gi]||{}).programs||[])[pi]||{}).levels?.[li];
   if(!l){location.hash='#/';return}
-  const items=l.reviews||[];
-  document.getElementById('app').innerHTML=`<a class="back" href="#/">← Quay lại</a>
-  <div class="banner ${esc(l.color)}"><div class="ico">${esc(l.icon||'📝')}</div>
-    <div class="info"><h1>${esc(l.name)}</h1></div></div>
-  <div class="rgrid">`+(items.length?items.map((r,n)=>{
-    const u=safeUrl(r.url);
-    return u?`<a class="rcard on ${esc(l.color)}" href="${esc(u)}" target="_blank" rel="noopener"><span class="num">${n+1}</span><b>${esc(r.name)}</b><span class="tag">Bắt đầu</span></a>`
-            :`<div class="rcard off ${esc(l.color)}"><span class="num">${n+1}</span><b>${esc(r.name)}</b><span class="tag">Sắp có</span></div>`;
-  }).join(''):'<div class="empty" style="grid-column:1/-1">Chưa có bài ôn nào.</div>')+`</div>`;
+  const topics=l.topics||legacy(l),doc=safeUrl(l.docUrl),col=esc(l.color||'blue');
+  const rows=t=>(t.lessons||[]).map(s=>`<div class="lrow"><span class="lnum">${esc(s.nums)}</span><span class="lname">${esc(s.name)}</span><div class="lbtns">${btn(s.lessonUrl,'les','Bài học')}${btn(s.reviewUrl,'rev','Ôn tập')}</div></div>`).join('')||'<div class="empty">Chưa có bài nào.</div>';
+  document.getElementById('app').innerHTML=`<div class="banner ${col}">
+    <div class="btop"><a class="back" href="#/">← Quay lại</a>${doc?`<a class="back" href="${esc(doc)}" target="_blank" rel="noopener">📄 Tài liệu</a>`:''}</div>
+    <div class="bmain"><div class="ico">${esc(l.icon||'📝')}</div><h1>${esc(l.reviewTitle||l.name)}</h1></div></div>`
+  +(topics.length?topics.map(t=>`<section class="topic">${t.title?`<h2>${esc(t.title)}</h2>`:''}<div class="lrows ${col}">${rows(t)}</div></section>`).join(''):'<div class="empty">Chưa có bài nào.</div>');
 }
 
 function setBrand(){

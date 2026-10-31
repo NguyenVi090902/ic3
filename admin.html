@@ -15,7 +15,10 @@ input,select,textarea{width:100%;font:inherit;font-size:14px;padding:8px 10px;bo
 textarea{min-height:110px;resize:vertical}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .g3{display:grid;grid-template-columns:90px 1fr 120px;gap:10px}
-.g3r{display:grid;grid-template-columns:150px 1fr 44px;gap:8px;margin:6px 0}
+.g4r{display:grid;grid-template-columns:80px 1.2fr 1fr 1fr 124px;gap:8px;margin:6px 0;align-items:center}
+.g2t{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}
+.tp{border:1.5px solid #e1d8b8;background:#fff;border-radius:12px;padding:10px 12px;margin:10px 0}
+.mini{display:flex;gap:4px}.mini .b{padding:6px 10px}
 .sub{border:1.5px dashed #d9d4c3;border-radius:12px;padding:12px;margin:10px 0}
 .lv{border-left:5px solid #f3d089;background:#fffaf0;border-radius:10px;padding:10px 12px;margin:10px 0}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
@@ -27,7 +30,7 @@ button.b.d{background:#fde0dc;color:#b42318}
 .ok{color:#1a7f37}.err{color:#b42318}
 details summary{cursor:pointer;font-weight:800;font-size:18px}
 small{color:#777}
-@media(max-width:600px){.g3r,.g2,.g3{grid-template-columns:1fr}}
+@media(max-width:600px){.g4r,.g2,.g2t,.g3{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -77,7 +80,11 @@ function load(){
   const sc=document.createElement('script');sc.id='dataScript';
   sc.src='data.js?v='+Date.now();
   sc.onload=()=>{D=JSON.parse(JSON.stringify(window.SITE_DATA));
-    D.groups.forEach(g=>g.programs.forEach(p=>p.levels.forEach(l=>{l.reviews=l.reviews||[];l.reviewTitle=l.reviewTitle??('Ôn tập '+l.name);l.reviewIcon=l.reviewIcon||'📝';delete l.lessonUrl;delete l.reviewUrl})));
+    D.groups.forEach(g=>g.programs.forEach(p=>p.levels.forEach(l=>{
+      if(!l.topics)l.topics=(l.reviews&&l.reviews.length)?[{title:'',lessons:l.reviews.map((r,n)=>({nums:String(n+1),name:r.name||'',lessonUrl:'',reviewUrl:r.url||''}))}]:[];
+      l.topics.forEach(t=>t.lessons=t.lessons||[]);
+      l.reviewTitle=l.reviewTitle??l.name;l.docUrl=l.docUrl||'';
+      delete l.reviews;delete l.reviewIcon;delete l.lessonUrl;delete l.reviewUrl})));
     render();msg('')};
   sc.onerror=()=>{$('editor').innerHTML='<div class="empty">Không tải được data.js</div>'};
   document.body.appendChild(sc);
@@ -94,15 +101,23 @@ function render(){
     g.programs.forEach((p,pi)=>{
       h+=`<div class="sub"><div class="g3">${input(`groups.${gi}.programs.${pi}.icon`,'Icon',p.icon)}${input(`groups.${gi}.programs.${pi}.title`,'Tên chương trình',p.title)}<div class="bar" style="align-items:end"><button class="b d" data-act="delProg" data-g="${gi}" data-i="${pi}">Xóa</button></div></div>`;
       p.levels.forEach((l,li)=>{
-        const b=`groups.${gi}.programs.${pi}.levels.${li}`;
+        const b=`groups.${gi}.programs.${pi}.levels.${li}`,al=`data-g="${gi}" data-p="${pi}" data-i="${li}"`;
         h+=`<div class="lv"><div class="g3">${input(b+'.icon','Icon',l.icon)}${input(b+'.name','Tên ô (vd: Level 1)',l.name)}
           <div><label>Màu</label><select data-p="${b}.color">${opts(l.color)}</select></div></div>
-          <div class="g2">${input(b+'.reviewTitle','Tiêu đề trang Ôn tập',l.reviewTitle,'Ôn tập SPARK Level 1')}${input(b+'.reviewIcon','Icon các ô bài ôn',l.reviewIcon)}</div>
-          <label>Các bài ôn (${(l.reviews||[]).length} bài) — để trống link = hiện “Sắp có”</label>
-          ${(l.reviews||[]).map((r,ri)=>`<div class="g3r"><input data-p="${b}.reviews.${ri}.name" value="${esc(r.name)}" placeholder="Tên bài"><input data-p="${b}.reviews.${ri}.url" value="${esc(r.url)}" placeholder="https://..."><button class="b d" data-act="delRv" data-g="${gi}" data-p="${pi}" data-i="${li}" data-r="${ri}">✕</button></div>`).join('')}
-          <div class="bar"><button class="b" data-act="addRv" data-g="${gi}" data-p="${pi}" data-i="${li}">+ Thêm bài ôn</button>
-            <span>hoặc đặt số lượng:</span><input type="number" min="0" max="100" id="cnt-${gi}-${pi}-${li}" value="${(l.reviews||[]).length}" style="width:80px"><button class="b" data-act="setCount" data-g="${gi}" data-p="${pi}" data-i="${li}">Áp dụng</button></div>
-          <div class="bar"><button class="b" data-act="up" data-g="${gi}" data-p="${pi}" data-i="${li}">↑</button><button class="b" data-act="down" data-g="${gi}" data-p="${pi}" data-i="${li}">↓</button><button class="b d" data-act="delLv" data-g="${gi}" data-p="${pi}" data-i="${li}">Xóa ô</button></div></div>`;
+          <div class="g2">${input(b+'.reviewTitle','Tiêu đề trang bài (trống = tên ô)',l.reviewTitle,'IC3 SPARK GS6 - Level 1')}${input(b+'.docUrl','Link nút “Tài liệu” (trống = ẩn)',l.docUrl,'https://...')}</div>`;
+        (l.topics||[]).forEach((t,ti)=>{
+          const tb=`${b}.topics.${ti}`,at=`${al} data-t="${ti}"`;
+          h+=`<div class="tp"><div class="g2t">${input(tb+'.title','Tên chủ đề (trống = không hiện tiêu đề)',t.title,'Chủ đề 1: Cơ bản về công nghệ')}
+            <div class="mini"><button class="b" data-act="upTp" ${at}>↑</button><button class="b" data-act="downTp" ${at}>↓</button><button class="b d" data-act="delTp" ${at}>Xóa chủ đề</button></div></div>
+            <label>Các bài: số bài · tên bài · link Bài học · link Ôn tập (để trống link = nút xám)</label>`;
+          (t.lessons||[]).forEach((s,si)=>{
+            const sb=`${tb}.lessons.${si}`,as=`${at} data-r="${si}"`;
+            h+=`<div class="g4r"><input data-p="${sb}.nums" value="${esc(s.nums)}" placeholder="1, 2"><input data-p="${sb}.name" value="${esc(s.name)}" placeholder="Tên bài"><input data-p="${sb}.lessonUrl" value="${esc(s.lessonUrl)}" placeholder="Link Bài học"><input data-p="${sb}.reviewUrl" value="${esc(s.reviewUrl)}" placeholder="quiz.html?q=... hoặc https://..."><span class="mini"><button class="b" data-act="upLs" ${as}>↑</button><button class="b" data-act="downLs" ${as}>↓</button><button class="b d" data-act="delLs" ${as}>✕</button></span></div>`;
+          });
+          h+=`<div class="bar"><button class="b" data-act="addLs" ${at}>+ Thêm bài</button></div></div>`;
+        });
+        h+=`<div class="bar"><button class="b p" data-act="addTp" ${al}>+ Thêm chủ đề</button></div>
+          <div class="bar"><button class="b" data-act="up" ${al}>↑</button><button class="b" data-act="down" ${al}>↓</button><button class="b d" data-act="delLv" ${al}>Xóa ô</button></div></div>`;
       });
       h+=`<button class="b" data-act="addLv" data-g="${gi}" data-i="${pi}">+ Thêm ô Level</button></div>`;
     });
@@ -133,14 +148,16 @@ document.addEventListener('click',e=>{
   if(a==='delGroup'&&confirm('Xóa cả cấp học này?'))D.groups.splice(i,1);
   if(a==='addProg')D.groups[i].programs.push({title:'Chương trình mới',icon:'⭐',levels:[]});
   if(a==='delProg'&&confirm('Xóa chương trình này?'))D.groups[g].programs.splice(i,1);
-  if(a==='addLv')D.groups[g].programs[i].levels.push({name:'Level mới',icon:'🌟',color:'blue',reviewTitle:'Ôn tập Level mới',reviewIcon:'📝',reviews:[]});
+  if(a==='addLv')D.groups[g].programs[i].levels.push({name:'Level mới',icon:'🌟',color:'blue',reviewTitle:'Level mới',docUrl:'',topics:[]});
   if(a==='delLv'&&confirm('Xóa ô này?'))D.groups[g].programs[p].levels.splice(i,1);
   const LV=()=>D.groups[g].programs[p].levels[i];
-  if(a==='addRv'){const R=LV().reviews;R.push({name:'Bài ôn '+(R.length+1),url:''})}
-  if(a==='delRv')LV().reviews.splice(+b.dataset.r,1);
-  if(a==='setCount'){const n=Math.max(0,Math.min(100,parseInt($(`cnt-${g}-${p}-${i}`).value)||0)),R=LV().reviews;
-    if(n<R.length&&!confirm('Giảm xuống '+n+' bài sẽ xóa các bài cuối. Tiếp tục?'))return;
-    while(R.length>n)R.pop();while(R.length<n)R.push({name:'Bài ôn '+(R.length+1),url:''})}
+  const TP=()=>LV().topics,LS=()=>TP()[+b.dataset.t].lessons,mv=(A,x,y)=>{if(y>=0&&y<A.length)[A[x],A[y]]=[A[y],A[x]]};
+  if(a==='addTp')TP().push({title:'Chủ đề '+(TP().length+1),lessons:[]});
+  if(a==='delTp'&&confirm('Xóa chủ đề này và các bài trong đó?'))TP().splice(+b.dataset.t,1);
+  if(a==='upTp'||a==='downTp'){const t=+b.dataset.t;mv(TP(),t,a==='upTp'?t-1:t+1)}
+  if(a==='addLs'){const n=TP().reduce((x,t)=>x+t.lessons.length,0)+1;LS().push({nums:String(n),name:'Bài mới',lessonUrl:'',reviewUrl:''})}
+  if(a==='delLs')LS().splice(+b.dataset.r,1);
+  if(a==='upLs'||a==='downLs'){const r=+b.dataset.r;mv(LS(),r,a==='upLs'?r-1:r+1)}
   if(a==='up'||a==='down'){const L=D.groups[g].programs[p].levels,j=a==='up'?i-1:i+1;if(j>=0&&j<L.length)[L[i],L[j]]=[L[j],L[i]]}
   render();
 });
