@@ -23,7 +23,7 @@ window.SITE_DATA = {
                       "nums": "1, 2",
                       "name": "Phần cứng máy tính",
                       "lessonUrl": "",
-                      "reviewUrl": "https://nguyenvi090902.github.io/ic3/quiz.html?q=splv1_1_2"
+                      "reviewUrl": "https://nguyenvi090902.github.io/ic3/quiz.html?q=splv1_12"
                     },
                     {
                       "nums": "3",
