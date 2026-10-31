@@ -11,11 +11,17 @@ button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:8px 16p
 button.g{background:#e9e3cf;color:#333}.tabs{display:flex;flex-wrap:wrap;gap:4px}
 table{border-collapse:collapse;width:100%;font-size:14px}td,th{border-bottom:1px solid #eee;padding:6px 8px;text-align:left}
 button.dg{background:#d92d20}button.dg:disabled{background:#e9e3cf;color:#999;cursor:not-allowed}label.dt{font-size:14px;font-weight:600;white-space:nowrap}tr.rr{cursor:pointer}tr.rr:hover{background:#fffaf0}tr.sel{background:#fff1d0!important}input[type=checkbox]{width:18px;height:18px;margin:0;cursor:pointer}.bad{color:#b42318}.good{color:#1a7f37}code{background:#f3efe0;padding:2px 6px;border-radius:6px}
+.pgr{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:10px 0}.pgr button{padding:6px 12px;min-width:36px;margin:0}.pgr button:disabled{opacity:.45;cursor:not-allowed}.pgr .pi{color:#666;font-size:14px;margin:0 8px 0 0}
+.rhd h3{margin:0}.rsum{margin:6px 0;color:#555;font-size:14px}button:disabled{opacity:.45;cursor:not-allowed}.rsum b{color:#222}td.n,th.n{text-align:right;white-space:nowrap}tr.top td{background:#fff7d6}
+@media print{.tabs,.noprint{display:none!important}body{background:#fff}.c{box-shadow:none;border:1px solid #ddd;page-break-inside:avoid}}
 </style></head><body><main id="app"></main>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const sb=supabase.createClient(SB.url,SB.key),app=$('#app'),TYPES=['single','multi','fill','drag','match','connect'];
+const sb=supabase.createClient(SB.url,SB.key),app=$('#app'),TYPES=['single','multi','fill','drag','match','connect','sort'];
 const rc=()=>Array.from({length:6},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random()*32|0]).join('');
+// Chỉ hiện dữ liệu của N ngày gần nhất (tính cả hôm nay). Đổi số này nếu muốn dài/ngắn hơn.
+const KEEP_DAYS=7;
+const weekStart=()=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-(KEEP_DAYS-1));return d};
 const dl=(name,rows)=>{const t='\ufeff'+rows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name;a.click()};
 
 sb.auth.getSession().then(({data})=>data.session?shell():login());
@@ -24,40 +30,67 @@ function login(){
   $('#li').onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});error?$('#m').textContent=error.message:shell()};
 }
 function shell(){
-  app.innerHTML=`<div class="tabs"><button data-t="Res">📊 Kết quả</button><button data-t="Cls">🏫 Lớp & học sinh</button><button data-t="Qz">❓ Câu hỏi</button><button class="g" id="lo">Thoát</button></div><div id="body"></div>`;
+  app.innerHTML=`<div class="tabs"><button data-t="Res">📊 Kết quả</button><button data-t="Rep">📑 Báo cáo</button><button data-t="Cls">🏫 Lớp & học sinh</button><button data-t="Qz">❓ Câu hỏi</button><button class="g" id="lo">Thoát</button></div><div id="body"></div>`;
   app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>window['v'+b.dataset.t]());
   $('#lo').onclick=async()=>{await sb.auth.signOut();login()};vRes();
 }
 
 async function vRes(){
   const [{data:qz},{data:cl}]=await Promise.all([sb.from('quizzes').select('id,title'),sb.from('classes').select('id,school,name').order('school').order('name')]);
-  $('#body').innerHTML=`<div class="c"><select id="fq"><option value="">Tất cả bài</option>${(qz||[]).map(q=>`<option value="${esc(q.id)}">${esc(q.title)}</option>`).join('')}</select>
+  $('#body').innerHTML=`<div class="c" id="rc"><select id="fq"><option value="">Tất cả bài</option>${(qz||[]).map(q=>`<option value="${esc(q.id)}">${esc(q.title)}</option>`).join('')}</select>
     <select id="fc"><option value="">Tất cả lớp</option>${(cl||[]).map(c=>`<option value="${c.id}">${esc(c.school)} - ${esc(c.name)}</option>`).join('')}</select>
     <label class="dt">Từ ngày <input type="date" id="fd1"></label>
     <label class="dt">Đến ngày <input type="date" id="fd2"></label>
     <button id="clr" class="g" title="Bỏ tất cả bộ lọc">✕ Xóa lọc</button>
-    <button id="ex">⬇ Xuất CSV</button>
+    <button id="ex" title="Xuất tất cả kết quả theo bộ lọc hiện tại (không chỉ trang này)">⬇ Xuất CSV</button>
     <button id="del" class="dg" disabled>🗑 Xóa đã chọn (<span id="dn">0</span>)</button> <span id="rm" class="bad"></span>
-    <div style="overflow-x:auto"><table id="tb"></table></div></div>`;
-  const H=['Thời gian','Trường','Lớp','Học sinh','Bài','Điểm'];let rows=[],ids=[];const sel=new Set();
+    <div class="rsum" id="wk"></div>
+    <div class="pgr" id="pgt"></div>
+    <div style="overflow-x:auto"><table id="tb"></table></div>
+    <div class="pgr" id="pgb"></div></div>`;
+  {const pad=n=>String(n).padStart(2,'0'),yl=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()),w=weekStart();
+    ['fd1','fd2'].forEach(id=>{$('#'+id).min=yl(w);$('#'+id).max=yl(new Date())});
+    $('#wk').textContent='📅 Chỉ hiển thị kết quả '+KEEP_DAYS+' ngày gần nhất (từ '+pad(w.getDate())+'/'+pad(w.getMonth()+1)+'/'+w.getFullYear()+').'}
+  const H=['Thời gian','Trường','Lớp','Học sinh','Bài','Điểm'],PS=50,COLS='id,created_at,quiz_id,student_name,score,total,classes(school,name)';
+  let rows=[],ids=[],pg=0,total=0;const sel=new Set();
+  const toRow=r=>[new Date(r.created_at).toLocaleString('vi-VN'),r.classes?.school||'',r.classes?.name||'',r.student_name,r.quiz_id,r.score+'/'+r.total];
+  // câu truy vấn đã áp dụng bộ lọc (dùng cho cả hiển thị từng trang lẫn xuất CSV)
+  const mk=()=>{
+    let q=sb.from('attempts').select(COLS,{count:'exact'});
+    if($('#fq').value)q=q.eq('quiz_id',$('#fq').value);if($('#fc').value)q=q.eq('class_id',$('#fc').value);
+    // lọc theo ngày theo giờ địa phương (từ 00:00 của "Từ ngày" đến hết ngày "Đến ngày")
+    {let lo=weekStart();if($('#fd1').value){const f=new Date($('#fd1').value+'T00:00:00');if(f>lo)lo=f}   // không bao giờ sớm hơn mốc N ngày
+    q=q.gte('created_at',lo.toISOString())}
+    if($('#fd2').value){const e=new Date($('#fd2').value+'T00:00:00');e.setDate(e.getDate()+1);q=q.lt('created_at',e.toISOString())}
+    return q.order('created_at',{ascending:false}).order('id');
+  };
   const upd=()=>{
     $('#dn').textContent=sel.size;$('#del').disabled=!sel.size;
     document.querySelectorAll('#tb .rk').forEach(c=>{c.checked=sel.has(c.value);c.closest('tr').classList.toggle('sel',c.checked)});
     const a=$('#all');if(a){a.checked=ids.length>0&&sel.size===ids.length;a.indeterminate=sel.size>0&&sel.size<ids.length}
   };
-  const load=async()=>{
-    let q=sb.from('attempts').select('id,created_at,quiz_id,student_name,score,total,classes(school,name)').order('created_at',{ascending:false}).limit(1000);
-    if($('#fq').value)q=q.eq('quiz_id',$('#fq').value);if($('#fc').value)q=q.eq('class_id',$('#fc').value);
-    // lọc theo ngày theo giờ địa phương (từ 00:00 của "Từ ngày" đến hết ngày "Đến ngày")
-    if($('#fd1').value)q=q.gte('created_at',new Date($('#fd1').value+'T00:00:00').toISOString());
-    if($('#fd2').value){const e=new Date($('#fd2').value+'T00:00:00');e.setDate(e.getDate()+1);q=q.lt('created_at',e.toISOString())}
-    const {data}=await q;
-    ids=(data||[]).map(r=>r.id);sel.clear();
-    rows=(data||[]).map(r=>[new Date(r.created_at).toLocaleString('vi-VN'),r.classes?.school||'',r.classes?.name||'',r.student_name,r.quiz_id,r.score+'/'+r.total]);
-    $('#tb').innerHTML='<tr><th style="width:32px"><input type="checkbox" id="all" title="Chọn tất cả">'+H.map(h=>`<th>${h}`).join('')+'</tr>'+
-      rows.map((r,i)=>`<tr class="rr"><td><input type="checkbox" class="rk" value="${ids[i]}">`+r.map(x=>`<td>${esc(x)}`).join('')+'</tr>').join('');
-    upd();
+  const pgList=(c,n)=>{const o=[];let p=-1;[...new Set([0,c-2,c-1,c,c+1,c+2,n-1])].filter(x=>x>=0&&x<n).sort((x,y)=>x-y).forEach(x=>{if(p>=0&&x-p>1)o.push('…');o.push(x);p=x});return o};
+  const pager=()=>{
+    const n=Math.max(1,Math.ceil(total/PS)),from=total?pg*PS+1:0,to=Math.min(total,(pg+1)*PS);
+    let h=`<span class="pi">${total?`Hiển thị ${from}–${to} / ${total} kết quả`:'Không có kết quả'}</span>`;
+    if(n>1)h+=`<button class="g" data-p="${pg-1}"${pg?'':' disabled'}>‹ Trước</button>`+
+      pgList(pg,n).map(x=>x==='…'?'<span class="pi">…</span>':`<button class="${x===pg?'cur':'g'}" data-p="${x}">${x+1}</button>`).join('')+
+      `<button class="g" data-p="${pg+1}"${pg<n-1?'':' disabled'}>Sau ›</button>`;
+    document.querySelectorAll('.pgr').forEach(e=>e.innerHTML=h);
   };
+  const load=async(p)=>{
+    if(typeof p==='number')pg=p;
+    const {data,count,error}=await mk().range(pg*PS,pg*PS+PS-1);
+    if(error){if(pg>0){pg=0;return load()}$('#tb').innerHTML='<tr><td class="bad">Lỗi: '+esc(error.message)+'</tr>';return}
+    total=count||0;
+    ids=(data||[]).map(r=>r.id);sel.clear();
+    rows=(data||[]).map(toRow);
+    $('#tb').innerHTML='<tr><th style="width:32px"><input type="checkbox" id="all" title="Chọn tất cả (trang này)">'+H.map(h=>`<th>${h}`).join('')+'</tr>'+
+      rows.map((r,i)=>`<tr class="rr"><td><input type="checkbox" class="rk" value="${ids[i]}">`+r.map(x=>`<td>${esc(x)}`).join('')+'</tr>').join('');
+    pager();upd();
+  };
+  // chuyển trang
+  $('#rc').addEventListener('click',e=>{const b=e.target.closest('.pgr button[data-p]');if(b&&!b.disabled){load(+b.dataset.p);scrollTo(0,0)}});
   // chọn từng dòng (bấm vào ô tick hoặc bất kỳ chỗ nào trên dòng)
   $('#tb').addEventListener('click',e=>{
     if(e.target.id==='all'){ids.forEach(i=>e.target.checked?sel.add(i):sel.delete(i));return upd()}
@@ -75,12 +108,109 @@ async function vRes(){
       if(error){$('#rm').textContent='Lỗi: '+error.message;upd();return}
       n+=(data||[]).length;
     }
+    total-=n;pg=Math.min(pg,Math.max(0,Math.ceil(total/PS)-1));   // trang cuối bị xóa hết thì lùi 1 trang
     await load();
     $('#rm').textContent=n<list.length?'Chỉ xóa được '+n+'/'+list.length+' (kiểm tra quyền trong Supabase)':'';
     if(n===list.length){$('#rm').className='good';$('#rm').textContent='Đã xóa '+n+' kết quả ✓';setTimeout(()=>{$('#rm').textContent='';$('#rm').className='bad'},3000)}
   };
-  $('#fq').onchange=$('#fc').onchange=$('#fd1').onchange=$('#fd2').onchange=load;
-  $('#clr').onclick=()=>{$('#fq').value=$('#fc').value=$('#fd1').value=$('#fd2').value='';load()};$('#ex').onclick=()=>dl('ket-qua.csv',[H,...rows]);load();
+  // xuất CSV: lấy TOÀN BỘ kết quả theo bộ lọc (mỗi lần 1000 dòng), không chỉ trang đang xem
+  $('#ex').onclick=async()=>{
+    const btn=$('#ex'),old=btn.textContent;btn.disabled=true;btn.textContent='Đang xuất…';
+    const all=[];let from=0,fail=null;
+    for(;;){
+      const {data,error}=await mk().range(from,from+999);
+      if(error){fail=error;break}
+      all.push(...(data||[]).map(toRow));
+      if(!data||data.length<1000)break;from+=1000;
+    }
+    btn.disabled=false;btn.textContent=old;
+    if(fail)return alert('Không xuất được: '+fail.message);
+    dl('ket-qua.csv',[H,...all]);
+  };
+  $('#fq').onchange=$('#fc').onchange=$('#fd1').onchange=$('#fd2').onchange=()=>load(0);
+  $('#clr').onclick=()=>{$('#fq').value=$('#fc').value=$('#fd1').value=$('#fd2').value='';load(0)};
+  load(0);
+}
+
+// ---------- Báo cáo theo ngày: mỗi (bài × lớp) là 1 báo cáo, mỗi học sinh lấy điểm CAO NHẤT ----------
+async function vRep(){
+  const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const dmy=s=>s.split('-').reverse().join('/'),nat=(a,b)=>String(a).localeCompare(String(b),'vi',{numeric:true});
+  const hm=t=>new Date(t).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
+  const {data:qz}=await sb.from('quizzes').select('id,title');
+  const QT=Object.fromEntries((qz||[]).map(q=>[q.id,q.title]));
+  $('#body').innerHTML=`<div class="c noprint"><button class="g" id="dp" title="Ngày trước">‹</button> <input type="date" id="rd"> <button class="g" id="dn2" title="Ngày sau">›</button> <button class="g" id="td">Hôm nay</button>
+    <select id="rq"></select> <select id="rcl"></select>
+    <button id="rex">⬇ Xuất CSV</button> <button class="g" id="rpr">🖨 In</button> <span id="rmsg"></span><div class="rsum" id="wk"></div></div><div id="rout"></div>`;
+  let ATT=[],tk=0,SHOWN=[];
+  // chỉ cho chọn trong N ngày gần nhất
+  const clamp=()=>{
+    const a=ymd(weekStart()),b=ymd(new Date());let v=$('#rd').value||b;if(v<a)v=a;if(v>b)v=b;
+    $('#rd').min=a;$('#rd').max=b;$('#rd').value=v;$('#dp').disabled=v<=a;$('#dn2').disabled=v>=b;
+    $('#wk').textContent='📅 Chỉ hiển thị báo cáo '+KEEP_DAYS+' ngày gần nhất (từ '+dmy(a)+' đến '+dmy(b)+').';
+  };
+  const fetchDay=async()=>{
+    clamp();const d=$('#rd').value;if(!d)return;const my=++tk;
+    $('#rmsg').className='';$('#rmsg').textContent='Đang tải…';
+    const a=new Date(d+'T00:00:00'),b=new Date(a);b.setDate(b.getDate()+1);
+    const all=[];let from=0;
+    for(;;){
+      const {data,error}=await sb.from('attempts').select('id,created_at,quiz_id,class_id,student_id,student_name,score,total,classes(school,name)')
+        .gte('created_at',a.toISOString()).lt('created_at',b.toISOString()).order('created_at').order('id').range(from,from+999);
+      if(my!==tk)return;
+      if(error){$('#rmsg').className='bad';$('#rmsg').textContent='Lỗi: '+error.message;return}
+      all.push(...(data||[]));if(!data||data.length<1000)break;from+=1000;
+    }
+    ATT=all;$('#rmsg').textContent='';fillFilters();draw();
+  };
+  const clsKey=r=>r.class_id||'__none',clsLabel=r=>r.classes?r.classes.school+' - '+r.classes.name:'Không rõ lớp';
+  const fillFilters=()=>{
+    const qv=$('#rq').value,cv=$('#rcl').value;
+    const qs=[...new Set(ATT.map(r=>r.quiz_id))].sort(nat),cm=new Map();ATT.forEach(r=>cm.set(clsKey(r),clsLabel(r)));
+    const cs=[...cm].sort((x,y)=>nat(x[1],y[1]));
+    $('#rq').innerHTML='<option value="">Tất cả bài</option>'+qs.map(x=>`<option value="${esc(x)}"${x===qv?' selected':''}>${esc(QT[x]||x)} (${esc(x)})</option>`).join('');
+    $('#rcl').innerHTML='<option value="">Tất cả lớp</option>'+cs.map(([k,l])=>`<option value="${esc(k)}"${k===cv?' selected':''}>${esc(l)}</option>`).join('');
+  };
+  // gom theo (bài, lớp); mỗi học sinh giữ điểm cao nhất (nếu bằng nhau thì lấy lần làm sớm hơn)
+  const build=()=>{
+    const qv=$('#rq').value,cv=$('#rcl').value,G=new Map();
+    ATT.forEach(r=>{
+      if(qv&&r.quiz_id!==qv)return;if(cv&&clsKey(r)!==cv)return;
+      const gk=r.quiz_id+'|'+clsKey(r);let g=G.get(gk);
+      if(!g)G.set(gk,g={quiz:r.quiz_id,label:clsLabel(r),S:new Map()});
+      const sk=r.student_id||'n:'+r.student_name;let st=g.S.get(sk);
+      if(!st)g.S.set(sk,{name:r.student_name||'(không rõ)',best:r.score,total:r.total,at:r.created_at,n:1});
+      else{st.n++;if(r.score>st.best){st.best=r.score;st.total=r.total;st.at=r.created_at}}
+    });
+    return [...G.values()].sort((x,y)=>nat(x.quiz,y.quiz)||nat(x.label,y.label)).map(g=>{
+      const R=[...g.S.values()].sort((x,y)=>y.best-x.best||nat(x.name,y.name));
+      R.forEach((r,k)=>r.rank=k&&r.best===R[k-1].best?R[k-1].rank:k+1);   // bằng điểm thì cùng hạng
+      return {...g,R};
+    });
+  };
+  const draw=()=>{
+    const d=$('#rd').value,G=build();SHOWN=G;
+    if(!G.length){$('#rout').innerHTML=`<div class="c">Không có bài làm nào trong ngày ${esc(dmy(d))}${$('#rq').value||$('#rcl').value?' (theo bộ lọc đang chọn)':''}.</div>`;return}
+    $('#rout').innerHTML=G.map((g,gi)=>{
+      const R=g.R,sc=R.map(r=>r.best),tot=R[0].total,avg=Math.round(sc.reduce((a,b)=>a+b,0)/sc.length);
+      return `<div class="c rp"><div class="rhd"><h3>📑 Báo cáo ${gi+1}</h3></div>
+        <p class="rsum"><b>Bài:</b> ${esc(QT[g.quiz]||g.quiz)} <code>${esc(g.quiz)}</code> · <b>Lớp:</b> ${esc(g.label)} · <b>Ngày:</b> ${esc(dmy(d))}</p>
+        <p class="rsum">${R.length} học sinh · Điểm trung bình: <b>${avg}/${tot}</b> · Cao nhất: <b>${Math.max(...sc)}/${tot}</b> · Thấp nhất: <b>${Math.min(...sc)}/${tot}</b></p>
+        <div style="overflow-x:auto"><table><tr><th>Hạng<th>Học sinh<th class="n">Điểm cao nhất<th class="n">Số lần làm<th>Lúc làm (lần tốt nhất)</tr>${R.map(r=>`<tr${r.rank<=3?' class="top"':''}><td>${['','🥇','🥈','🥉'][r.rank]||''} ${r.rank}<td>${esc(r.name)}<td class="n"><b>${r.best}/${r.total}</b><td class="n">${r.n}<td>${esc(hm(r.at))}</tr>`).join('')}</table></div></div>`;
+    }).join('');
+  };
+  const shift=n=>{const x=new Date($('#rd').value+'T00:00:00');x.setDate(x.getDate()+n);$('#rd').value=ymd(x);fetchDay()};
+  $('#rd').onchange=fetchDay;$('#dp').onclick=()=>shift(-1);$('#dn2').onclick=()=>shift(1);
+  $('#td').onclick=()=>{$('#rd').value=ymd(new Date());fetchDay()};
+  $('#rq').onchange=$('#rcl').onchange=draw;
+  $('#rpr').onclick=()=>window.print();
+  $('#rex').onclick=()=>{
+    const d=dmy($('#rd').value),rows=[['Báo cáo','Mã bài','Tên bài','Lớp','Ngày','Hạng','Học sinh','Điểm cao nhất','Tổng điểm','Số lần làm','Lúc làm (lần tốt nhất)']];
+    SHOWN.forEach((g,gi)=>g.R.forEach(r=>rows.push([gi+1,g.quiz,QT[g.quiz]||'',g.label,d,r.rank,r.name,r.best,r.total,r.n,hm(r.at)])));
+    if(rows.length<2)return alert('Không có dữ liệu để xuất');
+    dl('bao-cao-'+$('#rd').value+'.csv',rows);
+  };
+  $('#rd').value=ymd(new Date());fetchDay();
 }
 
 async function vCls(){
@@ -132,7 +262,7 @@ async function vQz(){
     try{qs=JSON.parse($('#qj').value)}catch(e){return $('#m').textContent='JSON sai: '+e.message}
     if(!/^[\w-]+$/.test(id)||!title)return $('#m').textContent='Mã bài chỉ gồm chữ/số/gạch ngang; cần có tiêu đề';
     if(!Array.isArray(qs)||!qs.length)return $('#m').textContent='Cần một danh sách câu hỏi dạng [ ... ]';
-    const bi=qs.findIndex(q=>!TYPES.includes(q.type)||!q.text||(q.type==='drag'||q.type==='match'||q.type==='connect'?!q.pairs:!q.answer));
+    const bi=qs.findIndex(q=>!TYPES.includes(q.type)||!q.text||(q.type==='sort'?!(Array.isArray(q.groups)&&q.groups.length>1&&Array.isArray(q.items)&&q.items.length&&q.items.every(x=>x&&x.text&&x.group>=0&&x.group<q.groups.length)):q.type==='drag'||q.type==='match'||q.type==='connect'?!q.pairs:!q.answer));
     if(bi>=0)return $('#m').textContent='Câu hỏi không hợp lệ (câu '+(bi+1)+')';
     const {error}=await sb.from('quizzes').upsert({id,title,questions:qs});
     if(error)return $('#m').textContent=error.message;

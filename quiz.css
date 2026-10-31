@@ -190,3 +190,52 @@ select.big:focus-visible,.mrow select:focus-visible{outline-offset:2px}
   .cn{grid-template-columns:1fr;gap:16px}
   .cr{padding-top:14px;border-top:2.5px dashed #e3dcc3}
 }
+
+/* ---------- Câu phân loại (sort) ---------- */
+.sx{margin-top:4px}
+.scount{text-align:right;font-weight:700;color:var(--muted);font-size:15px;margin-bottom:8px}
+.sbxs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.sbox{display:flex;flex-direction:column;min-height:170px;background:#fff;border:3px solid var(--line);border-radius:var(--radius);box-shadow:0 4px 0 var(--ink);overflow:hidden}
+.sbox .sh{background:var(--gc);color:#fff;font-weight:800;text-align:center;padding:10px 12px;border-bottom:3px solid var(--line);font-size:clamp(16px,2vw,19px);text-shadow:0 1px 0 rgba(0,0,0,.28)}
+.sbox .sb{flex:1;display:flex;flex-wrap:wrap;align-content:flex-start;gap:10px;padding:14px;min-height:110px}
+.slabel{margin:22px 0 10px;font-weight:800;color:var(--muted)}
+.sbank{display:flex;flex-wrap:wrap;gap:12px;padding:14px;min-height:64px;background:#f4eed6;border:2.5px dashed #cfc8ae;border-radius:16px}
+.sit{display:inline-flex;align-items:center;flex-wrap:wrap;gap:8px;text-align:left;font-weight:700;font-size:clamp(15px,2vw,18px);padding:7px 16px 7px 10px;background:#fff;border:2.5px solid var(--line);border-radius:14px;box-shadow:0 3px 0 var(--ink);cursor:grab;user-select:none}
+.sit .sg{color:var(--muted);letter-spacing:-2px;font-size:14px}
+.sit:hover{background:#fff8e0}
+.sit.sel{background:var(--yellow);outline:4px solid var(--sky);outline-offset:2px}
+.sit.good{border-color:var(--okd);background:#d8f5e4;cursor:default}
+.sit.bad{border-color:var(--nod);background:#ffdeda;cursor:default}
+
+/* ---------- Khung danh sách câu hỏi + lịch sử làm bài ---------- */
+body.hasnav .wrap{max-width:1180px}
+.qlay{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:22px;align-items:start}
+.qmain{min-width:0}
+.qnav{position:sticky;top:80px;background:#fff;border:3px solid var(--line);border-radius:var(--radius);box-shadow:0 4px 0 var(--ink);padding:16px 16px 14px;margin-top:10px}
+.qnt{font-weight:800;font-size:14px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.qng{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:8px}
+.qn{display:grid;place-items:center;height:42px;font:inherit;font-weight:800;font-size:16px;background:#f1efe8;color:var(--muted);border:2.5px solid var(--line);border-radius:12px;padding:0}
+button.qn{cursor:pointer;transition:transform .12s}
+button.qn:hover{transform:translateY(-2px)}
+.qn.good{background:#d8f5e4;color:var(--okd)}
+.qn.bad{background:#ffdeda;color:var(--nod)}
+.qn.part{background:#fff2c9;color:#8a5a00}
+.qn.cur{outline:4px solid var(--sky);outline-offset:1px}
+.qlg{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;font-weight:700;font-size:14px;color:var(--muted)}
+.qlg i{display:inline-block;width:13px;height:13px;border-radius:4px;margin-right:6px;vertical-align:-2px;border:2px solid var(--line)}
+.qlg i.good{background:var(--ok)}.qlg i.bad{background:var(--no)}.qlg i.part{background:var(--yellow)}
+.ft.rv{justify-content:space-between;flex-wrap:wrap;gap:10px}
+.rvtag{font-weight:800;color:var(--blue);background:#dbeaff;border:2.5px solid var(--line);border-radius:999px;padding:2px 16px}
+.rinfo.muted{color:var(--muted);font-size:15px}
+.hist{margin:14px auto 18px;max-width:480px;text-align:left;background:#fffaf0;border:2.5px solid var(--line);border-radius:16px;padding:12px 16px}
+.hist .ht{font-weight:800;margin-bottom:6px}
+.hr{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;font-weight:600;padding:5px 0;border-top:2px dashed #e3dcc3}
+.hr b{color:var(--blue);font-weight:800}.hr small{color:var(--muted);font-weight:600}
+.hr.me{background:#fff2c9;margin:0 -8px;padding:5px 8px;border-radius:10px;border-top-color:transparent}
+.hr.more{color:var(--muted)}
+.hbox{display:flex;align-items:center;justify-content:space-between;gap:12px 16px;flex-wrap:wrap;margin-top:20px;padding:12px 16px;background:#eaf3ff;border:2.5px dashed var(--blue);border-radius:16px;font-weight:600}
+.hbox .go{font-size:16px;padding:6px 20px}
+@media(max-width:960px){
+  .qlay{grid-template-columns:1fr}
+  .qnav{position:static;margin-top:0}
+}
