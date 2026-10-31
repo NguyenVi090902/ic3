@@ -23,8 +23,9 @@
 .fc-stats{flex:none;font-weight:800;font-size:15px;display:flex;gap:10px}
 .fc-stats span{background:#fff;border:2px solid var(--line);border-radius:999px;padding:1px 12px}
 
-.scene{perspective:1400px;margin:0 auto;max-width:720px}
-.card{display:grid;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.3,.7,.3,1);cursor:pointer;min-height:min(420px,62vh);outline-offset:6px;border-radius:var(--radius)}
+html{scrollbar-gutter:stable}
+.scene{perspective:2600px;margin:0 auto;max-width:720px}
+.card{display:grid;will-change:transform;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.3,.7,.3,1);cursor:pointer;min-height:min(420px,62vh);outline-offset:6px;border-radius:var(--radius)}
 .card.flipped{transform:rotateY(180deg)}
 .face{grid-area:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:60px 28px 40px;text-align:center;border:3px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);backface-visibility:hidden;-webkit-backface-visibility:hidden;position:relative}
 .face.front{background:#fff}
@@ -205,6 +206,8 @@ document.addEventListener('keydown',e=>{
 function init(){
   DECK=window.DECK;all=DECK.cards||[];
   document.title=DECK.title+' – Thẻ ghi nhớ';
+  // Tải trước toàn bộ hình để lúc lật không bị khựng khi hình mới hiện ra
+  all.forEach(c=>[c.img,c.imgBack].forEach(u=>{if(u)new Image().src=u}));
   if(!all.length){$('app').innerHTML='<div class="empty">Bộ thẻ này chưa có thẻ nào.</div>';return}
   start(all.map((_,i)=>i));
 }
